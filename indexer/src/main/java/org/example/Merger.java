@@ -6,10 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-/**
- * Hello world!
- *
- */
+
 public class Merger
 {
     public static void main(String[] args) {
@@ -42,7 +39,6 @@ public class Merger
         executor.shutdown();
 
         //merging intermediate
-        //System.out.println(intermediateIndex);
 
         mergePostingList(intermediateIndex);
 
@@ -59,7 +55,7 @@ public class Merger
                     PostingList postingList=new PostingList(line);
 
                     intermediateIndex.add(postingList);
-                    //mergePostingList(postingList,path);
+
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -71,7 +67,7 @@ public class Merger
         LinkedHashMap<String,PostingList> finalIndex=new LinkedHashMap<>();
         while(!intermediateIndex.isEmpty()){
             PostingList intermediatePostingList=intermediateIndex.poll();
-            //System.out.println(intermediatePostingList);
+
             PostingList finalPostingList=finalIndex.get(intermediatePostingList.term);
             if(finalPostingList!=null){
                 //we have to merge
@@ -82,7 +78,7 @@ public class Merger
                 finalIndex.put(intermediatePostingList.term,intermediatePostingList);
             }
         }
-        System.out.println(finalIndex);
+
         String path="data/file_final.dat";
 
         try {
