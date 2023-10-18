@@ -79,19 +79,43 @@ public class Merger
             }
         }
 
-        String path="indexer/data/file_final.dat";
+        saveMergedIndex(finalIndex);
+
+
+    }
+
+    private static void saveMergedIndex(LinkedHashMap<String, PostingList> finalIndex) {
+
+        String pathDocId="indexer/data/file_final_docId.dat";
+        String pathFreq="indexer/data/file_final_freq.dat";
 
         try {
-            File file = new File(path);
-            FileWriter fileWriter = new FileWriter(file);
-            BufferedWriter writer = new BufferedWriter(fileWriter);
+            File fileDocId = new File(pathDocId);
+            FileWriter fileWriterDocId = new FileWriter(fileDocId);
+            BufferedWriter writerDocId = new BufferedWriter(fileWriterDocId);
+
+            File fileFreq = new File(pathFreq);
+            FileWriter fileWriterFreq = new FileWriter(fileFreq);
+            BufferedWriter writerFreq = new BufferedWriter(fileWriterFreq);
 
             for(Map.Entry<String,PostingList> entry:finalIndex.entrySet()) {
-                writer.write(entry.getValue().toString());
-            }
-            writer.close(); // Close the writer to save changes
+                //writer.write(entry.getValue().toString());
+                System.out.println(entry.getValue().toString());
+                PostingList finalPostingList=new PostingList(entry.getValue().toString());
+                writerDocId.write(finalPostingList.getTerm());
+                writerFreq.write(finalPostingList.getTerm());
 
-            System.out.println("Data has been written to " + path);
+                for(Posting post: finalPostingList.getPostings()){
+                    writerDocId.write(" "+post.getDocId());
+                    writerFreq.write(" "+post.getFrequency());
+                }
+                writerDocId.write("\n");
+                writerFreq.write("\n");
+            }
+            writerDocId.close(); // Close the writer to save changes
+            writerFreq.close(); // Close the writer to save changes
+
+            //System.out.println("Data has been written to " + path);
         } catch (IOException e) {
             e.printStackTrace();
         }

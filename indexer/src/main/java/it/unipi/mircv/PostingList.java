@@ -1,6 +1,7 @@
 package it.unipi.mircv;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 
 public class PostingList {
@@ -20,7 +21,7 @@ public class PostingList {
             String[] pair = parts[i].split(":");
             if (pair.length == 2) {
                 int x = Integer.parseInt(pair[0]);
-                int y = Integer.parseInt(pair[1]);
+                int y = Integer.parseInt(pair[1].trim());
 
 
                 Posting posting=new Posting(x,y);
@@ -33,6 +34,9 @@ public class PostingList {
 
     public String getTerm() {
         return term;
+    }
+    public ArrayList<Posting> getPostings(){
+        return postings;
     }
 
     @Override
