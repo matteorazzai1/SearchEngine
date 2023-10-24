@@ -17,11 +17,11 @@ public class LexiconEntry {
         private long offsetIndexDocId=0;  //offset in the docId file of the inverted index
         private long offsetIndexFreq=0; //offset in the frequency file of the inverted index
 
-        //private int docIdSize=0; //size of the term posting list in the docId file of the Inverted index
-        //private int freqSize=0;  //size of the term posting list in the freq file of the Inverted index
+        private int docIdSize=0; //size of the term posting list in the docId file of the Inverted index
+        private int freqSize=0;  //size of the term posting list in the freq file of the Inverted index
         private double CollectionSize=1000;  //TODO we have to delete it and substitute with the right collectionsize
 
-        private static final long ENTRY_SIZE = 64+(4+8+4+4+8+8+8); //64 byte for the term, 4 for int values and 8 for double and long
+        private static final long ENTRY_SIZE = 64+(4+8+4+4+8+8+8+4+4); //64 byte for the term, 4 for int values and 8 for double and long
 
     /**
      * Constructor of the LexiconEntry
@@ -43,13 +43,13 @@ public class LexiconEntry {
         return idf;
     }
 
-    /*public int getDocIdSize() {
+    public int getDocIdSize() {
         return docIdSize;
     }
 
     public int getFreqSize() {
         return freqSize;
-    }*/
+    }
 
     public int getTermCollFreq() {
         return termCollFreq;
@@ -78,13 +78,13 @@ public class LexiconEntry {
         this.idf = Math.log10(CollectionSize/df); //TODO we have to set the right collectionSize
     }
 
-    /*public void setDocIdSize(int docIdSize) {
+    public void setDocIdSize(int docIdSize) {
         this.docIdSize = docIdSize;
     }
 
     public void setFreqSize(int freqSize) {
         this.freqSize = freqSize;
-    }*/
+    }
 
     public void setOffsetIndexDocId(long offsetIndexDocId) {
         this.offsetIndexDocId = offsetIndexDocId;
@@ -135,7 +135,10 @@ public class LexiconEntry {
         buffer.putDouble(idf);
         buffer.putInt(maxTf);
 
-        //TODO add offset
+        buffer.putInt(docIdSize);
+        buffer.putInt(freqSize);
+        buffer.putLong(offsetIndexDocId);
+        buffer.putLong(offsetIndexFreq);
 
         return positionTerm+ENTRY_SIZE; //return position from which we have to write
 

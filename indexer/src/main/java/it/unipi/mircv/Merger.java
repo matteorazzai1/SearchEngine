@@ -1,6 +1,10 @@
 package it.unipi.mircv;
 
+import it.unipi.mircv.compression.UnaryCompressor;
+import it.unipi.mircv.compression.VariableByteCompressor;
+
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -141,45 +145,55 @@ public class Merger
         String pathFreq="indexer/data/file_final_freq.dat";
 
         try {
-            File fileDocId = new File(pathDocId);
-            FileWriter fileWriterDocId = new FileWriter(fileDocId);
-            BufferedWriter writerDocId = new BufferedWriter(fileWriterDocId);
 
-            File fileFreq = new File(pathFreq);
-            FileWriter fileWriterFreq = new FileWriter(fileFreq);
-            BufferedWriter writerFreq = new BufferedWriter(fileWriterFreq);
+            FileChannel docIdChannel=(FileChannel) Files.newByteChannel(Paths.get(pathDocId),
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.READ,
+                    StandardOpenOption.CREATE);
+
+            FileChannel freqsChannel=(FileChannel) Files.newByteChannel(Paths.get(pathFreq),
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.READ,
+                    StandardOpenOption.CREATE);
+
+            long offsetDocId=0;
+            long offsetFreq=0;
 
             for(Map.Entry<String,PostingList> entry:finalIndex.entrySet()) {
 
                 PostingList finalPostingList=new PostingList(entry.getValue().toString());
-                System.out.println(finalPostingList.getTerm());
-                writerDocId.write(finalPostingList.getTerm());
-                writerFreq.write(finalPostingList.getTerm());
 
-                //TODO compression of docIdList and FreqList for the postingList of each term
-                //TODO after compression, set the right offset to the lexiconEntry of the term
-                long offsetDocId=0;
-                long offsetFreq=0;
+                int[] docIds=new int[finalPostingList.getPostings().size()];   //number of posting will be also the number of freqs and docIds
+                int[] freqs=new int[finalPostingList.getPostings().size()];
+
+                int postingPos=0;
+
+                //construct the array of docId and freqs
                 for(Posting post: finalPostingList.getPostings()){
-                    writerDocId.write(" "+post.getDocId());
-                    writerFreq.write(" "+post.getFrequency());
-                    offsetDocId+=4; //hypothesis of 4 byte (int) for each docid TODO correct with right values after compression
-                    offsetFreq+=4; //hypothesis of 4 byte (int) for each docid TODO correct with right values after compression
+
+                    docIds[postingPos]=post.getDocId();
+                    freqs[postingPos]=post.getFrequency();
+                    postingPos++;
+
                 }
+                byte[] compressedDocId= VariableByteCompressor.compressArrayInt(docIds);
+                byte[] compressedFreq=UnaryCompressor.compressArrayInt(freqs);
+                freqsChannel.write(ByteBuffer.wrap(compressedFreq));
 
                 //set offset inside lexiconEntry
-                System.out.println(finalPostingList.getTerm());
                 LexiconEntry lexEntry=finalLexicon.get(finalPostingList.getTerm());
                 if(lexEntry!=null) {
                     lexEntry.setOffsetIndexDocId(offsetDocId);
                     lexEntry.setOffsetIndexFreq(offsetFreq);
+                    lexEntry.setDocIdSize(compressedDocId.length);
+                    lexEntry.setFreqSize(compressedFreq.length);
                 }
+                offsetDocId+=compressedDocId.length;
+                offsetFreq+=compressedFreq.length;
 
-                writerDocId.write("\n");
-                writerFreq.write("\n");
             }
-            writerDocId.close(); // Close the writer to save changes
-            writerFreq.close(); // Close the writer to save changes
+            docIdChannel.close(); // Close the writer to save changes
+            freqsChannel.close(); // Close the writer to save changes
 
             writeLexicon(finalLexicon);
             //System.out.println("Data has been written to " + path);
