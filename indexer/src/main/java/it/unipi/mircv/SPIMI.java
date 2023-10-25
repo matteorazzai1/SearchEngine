@@ -118,21 +118,6 @@ public class SPIMI {
     }
 
     public static void main(String[] args) throws IOException {
-        SPIMI.performIndexing("collection.tar.gz", true, false);
-        /*
-        FileWriter bf = new FileWriter("data.txt");
-        String line = "1\t" + "ciao mi chiamo domenico\n";
-        String line2 = "2\t" + "molto piacere io sono edoardo\n";
-        String line3 = "3\t" + "domenico piacere mio di conoscerti\n";
-        String line4 = "4\t" + "ciao sono molto contento di conoscerti domenico\n";
-        String line5 = "5\t" + "ciao ciao contento molto molto domenico\n";
-
-        bf.write(line);
-        bf.write(line2);
-        bf.write(line3);
-        bf.write(line4);
-        bf.write(line5);
-        bf.close();
-        */
+        performIndexing("collection.tar.gz", true, false);
     }
 }
