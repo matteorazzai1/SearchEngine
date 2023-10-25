@@ -81,6 +81,7 @@ public class Preprocesser {
             punctuation.add("%");
             punctuation.add("=");
             punctuation.add("^");
+            punctuation.add("$");
         }
 
         Pattern htmlPattern = Pattern.compile("<.*?>");
@@ -108,20 +109,14 @@ public class Preprocesser {
         return newTerms;
     }
 
-    public static void process(String row) {
+    public static String process(String row) {
         List<String>terms = parse(row);
         terms=stem(terms);
-        try {
-            Files.writeString(Path.of("rowprocessed.txt"), terms.get(0)+'\t', StandardOpenOption.APPEND, StandardOpenOption.CREATE);
-            terms.remove(0);
-            String termsString = new String();
-            for(String term : terms){
-                termsString=termsString+term+" ";
-            }
-            Files.writeString(Path.of("rowprocessed.txt"), termsString+'\n', StandardOpenOption.APPEND, StandardOpenOption.CREATE);
-        }catch (IOException e){
-            e.printStackTrace();
+        String termsString = terms.get(0) + "\t";
+        terms.remove(0);
+        for(String term : terms){
+            termsString += term + " ";
         }
-
+        return termsString;
     }
 }
