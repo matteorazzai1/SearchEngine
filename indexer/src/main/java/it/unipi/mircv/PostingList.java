@@ -8,8 +8,11 @@ public class PostingList {
 
     public String term;
 
-    private final ArrayList<Posting> postings=new ArrayList<>();
+    private final ArrayList<Posting> postings = new ArrayList<>();
 
+    public PostingList(Posting p) {
+        postings.add(p);
+    }
 
     public PostingList(String line){
 
@@ -56,5 +59,19 @@ public class PostingList {
             //here we have to add the posting keeping the sorting in base of the docId
         this.postings.addAll(intermediatePostingList.postings);
         this.postings.sort(Comparator.comparing(Posting::getDocId));
+    }
+
+    public void updatePosting(int docID){
+        if (postings.get(postings.size() - 1).getDocId() == docID)
+        {
+            Posting p = postings.get(postings.size() - 1);
+            p.setFrequency(p.getFrequency() + 1);
+            postings.set(postings.size() - 1, p);
+        }
+        else{
+            Posting p = new Posting(docID, 1);
+            postings.add(p);
+        }
+
     }
 }
