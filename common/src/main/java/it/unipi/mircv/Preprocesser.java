@@ -93,8 +93,10 @@ public class Preprocesser {
         String[] termArray = text.split("\\s+");
         List<String> termList = new ArrayList<>();
         for (String term : termArray) {
-            term=term.toLowerCase();
-            termList.add(term);
+            if(!stopwords.contains(term)) {
+                term = term.toLowerCase();
+                termList.add(term);
+            }
         }
 
         return termList;
