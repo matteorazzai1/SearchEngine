@@ -16,21 +16,26 @@ public class PostingList {
 
     public PostingList(String line){
 
-        String[] parts = line.split(" ");
+        String[] parts = line.split("\t");
 
         this.term= parts[0];
 
-        for (int i = 1; i < parts.length; i++) {
-            String[] pair = parts[i].split(":");
-            if (pair.length == 2) {
-                int x = Integer.parseInt(pair[0]);
-                int y = Integer.parseInt(pair[1].trim());
+        if(parts[1] != null) {
+            String[] parts_posting = parts[1].split(" ");  //parts[1] is the complete posting list for a term
 
 
-                Posting posting=new Posting(x,y);
+            for (int i = 0; i < parts_posting.length; i++) {
+                String[] pair = parts_posting[i].split(":");
+                if (pair.length == 2) {
+                    int x = Integer.parseInt(pair[0]);
+                    int y = Integer.parseInt(pair[1].trim());
 
-                this.postings.add(posting);
 
+                    Posting posting = new Posting(x, y);
+
+                    this.postings.add(posting);
+
+                }
             }
         }
     }
@@ -46,12 +51,13 @@ public class PostingList {
     public String toString() {
         StringBuilder postingList=new StringBuilder();
 
-        postingList.append(term);
+        postingList.append(term+"\t");
 
         for(Posting post:postings){
-                postingList.append(" "+post.getDocId()+":"+post.getFrequency());
+                postingList.append(post.getDocId()+":"+post.getFrequency()+" ");
         }
-        postingList.append("\n");
+        postingList.deleteCharAt(postingList.length()-1); //to delete the last space
+        //postingList.append("\n"); //they already had it at the end of the line
         return postingList.toString();
     }
 
