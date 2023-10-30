@@ -106,6 +106,10 @@ public class SPIMI {
     }
 
         private static void flushIndex(HashMap<String, PostingList> postings, boolean isDebug, int block_counter) throws IOException {
+
+        //we need block_counter in the merge function, to know how mani intermediateIndexes we have to take
+            Constants.block_number=block_counter;
+
         FileWriter bf = null;
         try {
             bf = new FileWriter("pathToOutput" + block_counter + ".txt", StandardCharsets.UTF_8);

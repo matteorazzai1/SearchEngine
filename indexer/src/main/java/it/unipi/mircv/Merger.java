@@ -23,11 +23,17 @@ public class Merger
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        // Replace these with the paths to your .dat files
-        String[] filePaths = {"indexer/data/file1.dat", "indexer/data/file2.dat"};
+        //Obtain all the paths of the intermediateIndex
+        ArrayList<String> filePaths=new ArrayList<>();
+
+        //TODO togliere commento a questa riga sotto, eliminando quella successiva
+        //for(int i=0; i<Constants.block_number;i++){
+        for(int i=1;i<5;i++){
+            filePaths.add("indexer/data/pathToOutput"+i+".txt");
+        }
 
         // Create a thread pool to process the files concurrently
-        ExecutorService executor = Executors.newFixedThreadPool(filePaths.length);
+        ExecutorService executor = Executors.newFixedThreadPool(filePaths.size());
 
 
         List<Future<?>> futures = new ArrayList<>();
@@ -72,6 +78,7 @@ public class Merger
             while ((line = reader.readLine()) != null) {
 
                     PostingList postingList=new PostingList(line);
+                    //System.out.println(postingList);
 
                     intermediateIndex.add(postingList);
 
@@ -141,8 +148,8 @@ public class Merger
      */
     private static void saveMergedIndex(LinkedHashMap<String, PostingList> finalIndex, LinkedHashMap<String, LexiconEntry> finalLexicon) {
 
-        String pathDocId="indexer/data/file_final_docId.dat";
-        String pathFreq="indexer/data/file_final_freq.dat";
+        String pathDocId="indexer/data/inv_index_docId.dat";
+        String pathFreq="indexer/data/inv_index_freq.dat";
 
         try {
 
@@ -178,6 +185,7 @@ public class Merger
                 }
                 byte[] compressedDocId= VariableByteCompressor.compressArrayInt(docIds);
                 byte[] compressedFreq=UnaryCompressor.compressArrayInt(freqs);
+                docIdChannel.write(ByteBuffer.wrap(compressedDocId));
                 freqsChannel.write(ByteBuffer.wrap(compressedFreq));
 
                 //set offset inside lexiconEntry
@@ -218,6 +226,7 @@ public class Merger
 
         long positionTerm=0;
         for(LexiconEntry lex: finalLexicon.values()){
+            System.out.println("cycle:"+lex.getTerm());
             positionTerm=lex.writeLexiconEntry(positionTerm,lexicon);
         }
 
