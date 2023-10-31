@@ -4,6 +4,7 @@ import it.unipi.mircv.compression.UnaryCompressor;
 import it.unipi.mircv.compression.VariableByteCompressor;
 
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -133,8 +134,17 @@ public class Merger
             }
         }
 
-        saveMergedIndex(finalIndex,finalLexicon);
+        List<String> inputArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
 
+        boolean isDebugging = inputArguments.toString().contains("-agentlib:jdwp");
+
+        if (isDebugging) {
+            System.out.println("Debugging mode");
+            saveMergedIndexDebugging(finalIndex,finalLexicon);
+        } else {
+            System.out.println("Not in debugging mode");
+            saveMergedIndex(finalIndex,finalLexicon);
+        }
 
     }
 
@@ -227,6 +237,44 @@ public class Merger
         long positionTerm=0;
         for(LexiconEntry lex: finalLexicon.values()){
             positionTerm=lex.writeLexiconEntry(positionTerm,lexicon);
+        }
+
+    }
+
+
+    private static void saveMergedIndexDebugging(LinkedHashMap<String, PostingList> finalIndex, LinkedHashMap<String, LexiconEntry> finalLexicon) {
+        String path="indexer/data/invIndex_debug.txt";
+
+        try {
+            File file = new File(path);
+            FileWriter fileWriter = new FileWriter(file);
+            BufferedWriter writer = new BufferedWriter(fileWriter);
+
+            for(Map.Entry<String,PostingList> entry:finalIndex.entrySet()) {
+                writer.write(entry.getValue().toString());
+            }
+            writer.close(); // Close the writer to save changes
+
+            System.out.println("Data has been written to " + path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        path="indexer/data/lexicon_debug.txt";
+
+        try {
+            File file = new File(path);
+            FileWriter fileWriter = new FileWriter(file);
+            BufferedWriter writer = new BufferedWriter(fileWriter);
+
+            for(Map.Entry<String, LexiconEntry> entry:finalLexicon.entrySet()) {
+                writer.write(entry.getValue().toString());
+            }
+            writer.close(); // Close the writer to save changes
+
+            System.out.println("Data has been written to " + path);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
     }
