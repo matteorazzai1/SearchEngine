@@ -48,8 +48,7 @@ public class Preprocesser {
         List<String> termList = new ArrayList<>();
         for (String term : termArray) {
             term = term.toLowerCase();
-            if(!stopwords.contains(term) && !text.matches("[^a-zA-Z0-9]")) {
-                //System.out.println(Arrays.toString(term.getBytes(StandardCharsets.UTF_8)) + " " + term);
+            if(!stopwords.contains(term) && !term.matches("(?s).*[^a-zA-Z0-9](?s).*")) {
                 termList.add(term);
             }
         }

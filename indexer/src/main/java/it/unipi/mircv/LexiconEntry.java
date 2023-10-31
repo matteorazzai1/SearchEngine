@@ -123,9 +123,11 @@ public class LexiconEntry {
 
         CharBuffer charBuffer = CharBuffer.allocate(64);
 
-        for(int i=0;i<term.length();i++){
-                charBuffer.put(i,term.charAt(i));
-        }
+            for (int i = 0; i < term.length(); i++) {
+                if(i<64) {
+                    charBuffer.put(i, term.charAt(i));
+                }
+            }
 
         buffer.put(StandardCharsets.UTF_8.encode(charBuffer));
 

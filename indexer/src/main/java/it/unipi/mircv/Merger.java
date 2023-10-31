@@ -28,7 +28,7 @@ public class Merger
 
         //TODO togliere commento a questa riga sotto, eliminando quella successiva
         //for(int i=0; i<Constants.block_number;i++){
-        for(int i=1;i<5;i++){
+        for(int i=1;i<4;i++){
             filePaths.add("indexer/data/pathToOutput"+i+".txt");
         }
 
@@ -226,7 +226,6 @@ public class Merger
 
         long positionTerm=0;
         for(LexiconEntry lex: finalLexicon.values()){
-            System.out.println("cycle:"+lex.getTerm());
             positionTerm=lex.writeLexiconEntry(positionTerm,lexicon);
         }
 
