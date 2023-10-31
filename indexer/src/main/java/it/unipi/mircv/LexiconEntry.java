@@ -123,11 +123,11 @@ public class LexiconEntry {
 
         CharBuffer charBuffer = CharBuffer.allocate(64);
 
-            for (int i = 0; i < term.length(); i++) {
+        for (int i = 0; i < term.length(); i++) {
                 if(i<64) {
                     charBuffer.put(i, term.charAt(i));
                 }
-            }
+        }
 
         buffer.put(StandardCharsets.UTF_8.encode(charBuffer));
 
@@ -145,6 +145,17 @@ public class LexiconEntry {
         return positionTerm+ENTRY_SIZE; //return position from which we have to write
 
     }
+    @Override
+    public String toString() {
+        StringBuilder lexEntry=new StringBuilder();
 
+        lexEntry.append(term+"\t");
+
+        lexEntry.append(df+":"+idf+":"+termCollFreq+":"+maxTf+":"+maxTfidf+":"+offsetIndexDocId+":"+offsetIndexFreq+":"+
+                docIdSize+":"+freqSize+"\n");
+
+
+        return lexEntry.toString();
+    }
 
 }
