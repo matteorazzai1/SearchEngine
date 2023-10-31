@@ -64,6 +64,54 @@ public class VariableByteCompressor {
             return compressedArrayByte;
         }
 
-    //TODO decompression
+
+    /**
+     *  it takes the arrayCompressed vector with byte that represents some integers in VariableByte Encoding, and it
+     *  returns the integer value
+     * @param arrayCompressed the array of byte to convert
+     * @param numbers the number of integer to retrieve
+     * @return the array of integer decompressed
+     */
+    public static int[] decompressArray(byte[] arrayCompressed, int numbers){
+
+            int[] decompressedArray=new int[numbers];
+
+            int count=0; //count bytes starting with zero
+            int nextValue=0;
+
+            StringBuilder value=new StringBuilder();
+
+            for(int i=0;i<arrayCompressed.length;i++){
+
+                String byteCompressed=String.format("%8s", Integer.toBinaryString(arrayCompressed[i] & 0xFF)).replace(' ', '0');
+
+                if(byteCompressed.charAt(0)=='0'){
+                    if(count==0) {
+                        //it is the first byte related to the first integer
+                        count++; //for understand that the next one is the initial byte for the next integer
+                        value.append(byteCompressed);
+                    }
+                    else{
+                        //the last byte was the last one for the previous integer, so we need to save that values in the array
+
+                        decompressedArray[nextValue]=Integer.parseInt(String.valueOf(value),2);
+                        nextValue++;
+                        //this is the first byte for the next integer
+                        value=new StringBuilder(); // to make empty the stringBuilder for the next integer
+                        value.append(byteCompressed);
+                    }
+                }
+                else{
+                    //first bit of the byte is one, it has to be discarded, and we take the remainder
+                    value.append(byteCompressed.substring(1));
+                }
+            }
+            //we miss to construct the last integer of the array, that not finding another byte starting with zero, it is not been
+            //constructed during the cycle for
+
+            decompressedArray[nextValue]=Integer.parseInt(String.valueOf(value),2);
+
+            return decompressedArray;
+    }
 
 }

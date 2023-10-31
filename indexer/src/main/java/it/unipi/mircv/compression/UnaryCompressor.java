@@ -60,8 +60,44 @@ public class UnaryCompressor {
         return compressedArray;
     }
 
-    //TODO decompression
 
+    /**
+     * it takes the arrayCompressed vector with byte that represents some integers in Unary Encoding, and it
+     * returns the integer value
+     * @param arrayCompressed the array of byte to convert
+     * @param lengthArray the number of integer to retrieve
+     * @return the array of integer decompressed
+     */
+    public static int[] decompressArrayInt(byte[] arrayCompressed,int lengthArray){
+
+        int[] decompressedArray=new int[lengthArray];
+
+        StringBuilder compressedArray=new StringBuilder();
+
+        for(int i=0;i<arrayCompressed.length;i++){
+
+            String byteCompressed=String.format("%8s", Integer.toBinaryString(arrayCompressed[i] & 0xFF)).replace(' ', '0');
+            compressedArray.append(byteCompressed);
+
+        }
+
+        int count=0;
+        int nextValue=0;
+
+        for (int i = 0; i < compressedArray.length(); i++) {
+                if (compressedArray.charAt(i) == '1') {
+                    count++;
+                } else {
+                    decompressedArray[nextValue] = count+1;
+                    nextValue++;
+                    count=0;
+                }
+                if(nextValue==lengthArray)
+                    break;
+        }
+
+        return decompressedArray;
+    }
 
 
 }
