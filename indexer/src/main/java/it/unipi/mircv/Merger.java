@@ -134,17 +134,7 @@ public class Merger
             }
         }
 
-        List<String> inputArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
-
-        boolean isDebugging = inputArguments.toString().contains("-agentlib:jdwp");
-
-        if (isDebugging) {
-            System.out.println("Debugging mode");
-            saveMergedIndexDebugging(finalIndex,finalLexicon);
-        } else {
-            System.out.println("Not in debugging mode");
-            saveMergedIndex(finalIndex,finalLexicon);
-        }
+        saveMergedIndex(finalIndex,finalLexicon);
 
     }
 
@@ -213,7 +203,17 @@ public class Merger
             docIdChannel.close(); // Close the writer to save changes
             freqsChannel.close(); // Close the writer to save changes
 
-            writeLexicon(finalLexicon);
+            List<String> inputArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
+
+            boolean isDebugging = inputArguments.toString().contains("-agentlib:jdwp");
+
+            if (isDebugging) {
+                System.out.println("Debugging mode");
+                saveMergedIndexDebugging(finalIndex,finalLexicon);
+            } else {
+                System.out.println("Not in debugging mode");
+                writeLexicon(finalLexicon);
+            }
             //System.out.println("Data has been written to " + path);
         } catch (IOException e) {
             e.printStackTrace();
