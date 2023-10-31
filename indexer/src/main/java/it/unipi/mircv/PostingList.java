@@ -57,7 +57,7 @@ public class PostingList {
                 postingList.append(post.getDocId()+":"+post.getFrequency()+" ");
         }
         postingList.deleteCharAt(postingList.length()-1); //to delete the last space
-        //postingList.append("\n"); //they already had it at the end of the line
+        postingList.append("\n");
         return postingList.toString();
     }
 

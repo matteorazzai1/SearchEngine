@@ -147,15 +147,10 @@ public class LexiconEntry {
     }
     @Override
     public String toString() {
-        StringBuilder lexEntry=new StringBuilder();
 
-        lexEntry.append(term+"\t");
-
-        lexEntry.append(df+":"+idf+":"+termCollFreq+":"+maxTf+":"+maxTfidf+":"+offsetIndexDocId+":"+offsetIndexFreq+":"+
-                docIdSize+":"+freqSize+"\n");
-
-
-        return lexEntry.toString();
+        return term + "\t" +
+                df + ":" + idf + ":" + termCollFreq + ":" + maxTf + ":" + maxTfidf + ":" + offsetIndexDocId + ":" + offsetIndexFreq + ":" +
+                docIdSize + ":" + freqSize + "\n";
     }
 
 }
