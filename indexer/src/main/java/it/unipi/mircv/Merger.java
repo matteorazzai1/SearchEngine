@@ -42,7 +42,12 @@ public class Merger
         PriorityQueue<PostingList> intermediateIndex=new PriorityQueue<>(Comparator.comparing(PostingList::getTerm));
         for (String filePath : filePaths) {
 
-            Future<?> future = executor.submit(() -> processDatFile(filePath, intermediateIndex));
+            Future<?> future = executor.submit(() ->  {
+                // Synchronize access to the intermediateIndex
+                    synchronized (intermediateIndex) {
+                        processDatFile(filePath, intermediateIndex);
+                    }
+                });
             futures.add(future);
         }
 
