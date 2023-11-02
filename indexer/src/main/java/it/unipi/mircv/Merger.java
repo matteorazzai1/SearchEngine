@@ -117,7 +117,7 @@ public class Merger
 
                 int freq_term=lexEntry.getTermCollFreq();
                 int maxTf=lexEntry.getMaxTf();
-                for(Posting post:finalPostingList.getPostings()){
+                for(Posting post:intermediatePostingList.getPostings()){ //we have to count only the new posting for a specific term
                         freq_term+=post.getFrequency();
                         lexEntry.setTermCollFreq(freq_term);
                         if(post.getFrequency()>maxTf){
@@ -133,7 +133,19 @@ public class Merger
                 finalIndex.put(intermediatePostingList.term,intermediatePostingList);
                 //we have to add statistic of the term on the lexicon file
                 LexiconEntry lexEntry=new LexiconEntry(intermediatePostingList.term);
-                //lexEntry.setDf(intermediatePostingList.getPostings().size()); //TODO:Do we need to set partial length here? I don't think so
+                int freq_term=lexEntry.getTermCollFreq();
+
+                int maxTf=lexEntry.getMaxTf();
+                for(Posting post:intermediatePostingList.getPostings()){ //we have to count only the new posting for a specific term
+                    freq_term+=post.getFrequency();
+
+                    lexEntry.setTermCollFreq(freq_term);
+                    if(post.getFrequency()>maxTf){
+                        maxTf=post.getFrequency();
+                        lexEntry.setMaxTf(maxTf);
+                        lexEntry.setMaxTfidf(maxTf); //in the setMaxTfidf it will compute the MaxTfidf
+                    }
+                }
 
                 finalLexicon.put(intermediatePostingList.term,lexEntry);
             }
