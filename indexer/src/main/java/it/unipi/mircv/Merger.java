@@ -133,6 +133,10 @@ public class Merger
                 finalIndex.put(intermediatePostingList.term,intermediatePostingList);
                 //we have to add statistic of the term on the lexicon file
                 LexiconEntry lexEntry=new LexiconEntry(intermediatePostingList.term);
+                lexEntry.setDf(intermediatePostingList.getPostings().size()); //length of posting list is the total number of document in which the term is present
+                lexEntry.setIdf(lexEntry.getDf()); //we pass the df, and in the setIdf method we compute the idf
+
+                //start taking term collection frequency and maxTf
                 int freq_term=lexEntry.getTermCollFreq();
 
                 int maxTf=lexEntry.getMaxTf();
