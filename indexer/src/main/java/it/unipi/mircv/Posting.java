@@ -29,6 +29,6 @@ public class Posting {
 
         @Override
         public String toString() {
-                return super.toString();
+                return this.docId+":"+frequency;
         }
 }

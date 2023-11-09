@@ -1,9 +1,13 @@
 package it.unipi.mircv;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 
 public class LexiconEntry {
@@ -21,7 +25,7 @@ public class LexiconEntry {
         private int freqSize=0;  //size of the term posting list in the freq file of the Inverted index
         private double CollectionSize=1000;  //TODO we have to delete it and substitute with the right collectionsize
 
-        private static final long ENTRY_SIZE = 64+(4+8+4+4+8+8+8+4+4); //64 byte for the term, 4 for int values and 8 for double and long
+        public static final long ENTRY_SIZE_LEXICON = 64+(4+8+4+4+8+8+8+4+4); //64 byte for the term, 4 for int values and 8 for double and long
 
     /**
      * Constructor of the LexiconEntry
@@ -119,7 +123,7 @@ public class LexiconEntry {
      */
     public long writeLexiconEntry(long positionTerm, FileChannel channelLex) throws IOException {
 
-        MappedByteBuffer buffer=channelLex.map(FileChannel.MapMode.READ_WRITE,positionTerm,ENTRY_SIZE);
+        MappedByteBuffer buffer=channelLex.map(FileChannel.MapMode.READ_WRITE,positionTerm, ENTRY_SIZE_LEXICON);
 
         CharBuffer charBuffer = CharBuffer.allocate(64);
 
@@ -142,9 +146,51 @@ public class LexiconEntry {
         buffer.putLong(offsetIndexDocId);
         buffer.putLong(offsetIndexFreq);
 
-        return positionTerm+ENTRY_SIZE; //return position from which we have to write
+        return positionTerm+ ENTRY_SIZE_LEXICON; //return position from which we have to write
 
     }
+
+    /**
+     * read from disk the entry of the lexicon
+     * @param positionTerm the position of the term inside the lexicon
+     * @param lexiconFC the file channel from which to read the lexicon
+     * @return the lexiconEntry
+     * @throws IOException
+     */
+
+    public static LexiconEntry readLexEntryFromDisk(long positionTerm, FileChannel lexiconFC) throws IOException {
+
+        ByteBuffer buffer = ByteBuffer.allocate(64);
+        lexiconFC.position(positionTerm);
+
+        while (buffer.hasRemaining()) {
+            lexiconFC.read(buffer);
+        }
+
+        LexiconEntry lexEntry=new LexiconEntry(new String(buffer.array(), StandardCharsets.UTF_8).trim());
+
+        buffer = ByteBuffer.allocate((int) ENTRY_SIZE_LEXICON);
+
+        while (buffer.hasRemaining()) {
+            lexiconFC.read(buffer);
+        }
+
+        buffer.rewind();
+
+        lexEntry.df = buffer.getInt();
+        lexEntry.termCollFreq = buffer.getInt();
+        lexEntry.maxTfidf = buffer.getDouble();
+        lexEntry.idf = buffer.getDouble();
+        lexEntry.maxTf = buffer.getInt();
+
+        lexEntry.docIdSize = buffer.getInt();
+        lexEntry.freqSize = buffer.getInt();
+        lexEntry.offsetIndexDocId = buffer.getLong();
+        lexEntry.offsetIndexFreq = buffer.getLong();
+
+        return lexEntry;
+    }
+
     @Override
     public String toString() {
 
