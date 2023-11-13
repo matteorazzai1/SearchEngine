@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 
+import static it.unipi.mircv.Constants.LEXICON_PATH;
 import static it.unipi.mircv.LexiconEntry.ENTRY_SIZE_LEXICON;
 
 public class Lexicon {
@@ -30,10 +31,9 @@ public class Lexicon {
      */
     public Lexicon() throws IOException {
 
-        String lexiconPath="indexer/data/lexicon.dat";
         this.lexicon=new HashMap<>();
 
-        FileChannel lexiconFC=(FileChannel) Files.newByteChannel(Paths.get(lexiconPath),
+        FileChannel lexiconFC=(FileChannel) Files.newByteChannel(Paths.get(LEXICON_PATH),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
