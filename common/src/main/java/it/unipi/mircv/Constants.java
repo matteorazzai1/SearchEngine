@@ -16,4 +16,6 @@ public class Constants {
     public static final String INV_INDEX_FREQS="indexer/data/inv_index_freq.dat";
 
     public static int block_number;
+    public static final float k1 = 1.5f;
+    public static final float b = 0.75f;
 }

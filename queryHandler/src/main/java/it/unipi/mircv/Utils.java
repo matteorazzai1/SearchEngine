@@ -3,6 +3,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 import static java.lang.Float.POSITIVE_INFINITY;
+import static java.lang.Math.log10;
 
 public class Utils {
 
@@ -20,13 +21,25 @@ public class Utils {
     }
 
     public static int minDocID(LinkedList<PostingList> index, HashMap<String, Integer> positions){ //positions are indexes, not docids
-        int minID = (int) POSITIVE_INFINITY;
+        int minID = Integer.MAX_VALUE;
         for (PostingList p : index){
             if(positions.get(p.getTerm()) < p.getPostings().size()){
                 minID = Integer.min(minID, p.getPostings().get(positions.get(p.getTerm())).getDocId());
             }
         }
         return minID;
+    }
+
+    private static double tfIDF(int termQueryFrequency, int termDocFrequency, double termIDF){
+        return (termQueryFrequency * ((1 + log10(termDocFrequency)) * (termIDF)));
+    }
+
+    private static double BM25 (int termQueryFrequency, int termDocFrequency, double termIDF, int docLen){
+        return termQueryFrequency * ((termDocFrequency/((Constants.k1*((1-Constants.b) + (Constants.b*docLen/DocumentIndex.getAVDL())))+termDocFrequency)) * (termIDF));
+    }
+
+    public static double scoringFunction(boolean isBM25, int termQueryFrequency, int termDocFrequency, double termIDF, int docLen){
+        return(isBM25 ? BM25(termQueryFrequency, termDocFrequency, termIDF, docLen) : tfIDF(termQueryFrequency, termDocFrequency, termIDF));
     }
 
 
