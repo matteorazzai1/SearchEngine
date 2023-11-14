@@ -14,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static it.unipi.mircv.Constants.PATH_TO_COLLECTION;
+import static it.unipi.mircv.Constants.*;
 import static it.unipi.mircv.Preprocesser.process;
 
 public class SPIMI {
@@ -80,7 +80,7 @@ public class SPIMI {
     private static void flushLexicon(HashMap<String, PostingList> postings, int block_counter) throws IOException {
         FileWriter bf = null;
         try{
-            bf = new FileWriter("pathToLexiconOutput" + block_counter + ".txt", StandardCharsets.UTF_8);
+            bf = new FileWriter(PATH_TO_INTERMEDIATE_LEXICON + block_counter + ".txt", StandardCharsets.UTF_8);
             int df;
             int maxTF;
             StringBuilder s;
@@ -112,7 +112,7 @@ public class SPIMI {
 
         FileWriter bf = null;
         try {
-            bf = new FileWriter("pathToOutput" + block_counter + ".txt", StandardCharsets.UTF_8);
+            bf = new FileWriter(PATH_TO_INTERMEDIATE_INDEX + block_counter + ".txt", StandardCharsets.UTF_8);
             for (Map.Entry<String, PostingList> entry : postings.entrySet()) {
                 StringBuilder line = new StringBuilder(entry.getKey() + "\t");
                 for (Posting p : entry.getValue().getPostings()) {
