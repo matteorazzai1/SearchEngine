@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import static it.unipi.mircv.Constants.INV_INDEX_DOCID;
+import static it.unipi.mircv.Constants.INV_INDEX_FREQS;
+
 public class PostingList {
 
     public String term;
@@ -113,16 +116,14 @@ public class PostingList {
 
         byte[] docIdCompressed=new byte[lexEntry.getDocIdSize()];
         byte[] freqCompressed=new byte[lexEntry.getFreqSize()];
+        
 
-        String docIdPath="indexer/data/inv_index_docId.dat";
-        String freqPath="indexer/data/inv_index_freq.dat";
-
-        FileChannel docIdFC=(FileChannel) Files.newByteChannel(Paths.get(docIdPath),
+        FileChannel docIdFC=(FileChannel) Files.newByteChannel(Paths.get(INV_INDEX_DOCID),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
 
-        FileChannel freqFC=(FileChannel) Files.newByteChannel(Paths.get(freqPath),
+        FileChannel freqFC=(FileChannel) Files.newByteChannel(Paths.get(INV_INDEX_FREQS),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
