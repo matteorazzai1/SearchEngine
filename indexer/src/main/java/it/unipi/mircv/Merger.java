@@ -13,6 +13,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.nio.file.StandardOpenOption;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static it.unipi.mircv.Constants.*;
 
@@ -20,19 +23,38 @@ import static it.unipi.mircv.Constants.*;
 public class Merger
 {
 
-    static long offsetDocId=0;
-    static long offsetFreq=0;
-    static long positionTerm=0;
+    private static long offsetDocId=0;
+    private static long offsetFreq=0;
+    private static long positionTerm=0;
+    private static PriorityQueue<PostingList> intermediateIndex=new PriorityQueue<>(Comparator.comparing(PostingList::getTerm));
+
+    private static FileChannel docIdChannel=null;
+
+    private static FileChannel freqsChannel=null;
+
+    private static FileChannel lexiconChannel=null;
+
+    static boolean isDebugging = false;
+
     /**
      * It accesses to all the file related to intermediateInvertedIndex at the same time
      * @param args
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
+
+        //check if we are in debugging mode or not
+        List<String> inputArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
+
+        isDebugging = inputArguments.toString().contains("-agentlib:jdwp");
+
+        if(isDebugging){
+                //clear file for debug
+               FileUtils.clearDebugFiles();
+        }
+
         //Obtain all the paths of the intermediateIndex
         ArrayList<String> filePaths=new ArrayList<>();
-        LinkedHashMap<String,PostingList> finalIndex=new LinkedHashMap<>();
-        LinkedHashMap<String,LexiconEntry> finalLexicon=new LinkedHashMap<>();
 
         //TODO togliere commento a questa riga sotto, eliminando quella successiva
         //for(int i=0; i<Constants.block_number;i++){
@@ -40,8 +62,23 @@ public class Merger
             filePaths.add("indexer/data/pathToOutput"+i+".txt");
         }
 
+        //open file channels
 
-        PriorityQueue<PostingList> intermediateIndex=new PriorityQueue<>(Comparator.comparing(PostingList::getTerm));
+        docIdChannel=(FileChannel) Files.newByteChannel(Paths.get(INV_INDEX_DOCID),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
+
+        freqsChannel=(FileChannel) Files.newByteChannel(Paths.get(INV_INDEX_FREQS),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
+
+        lexiconChannel=(FileChannel) Files.newByteChannel(Paths.get(LEXICON_PATH),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
+
 
         List<BufferedReader> bufferedReaderList=new ArrayList<>();
         for (String filePath : filePaths) {
@@ -73,7 +110,7 @@ public class Merger
             // Reset the iterator for the next iteration
             iterator = bufferedReaderList.iterator();
 
-            mergePostingList(getMinPostings(intermediateIndex), finalIndex, finalLexicon);
+            mergePostingList(getMinPostings());
         }
 
 
@@ -81,22 +118,22 @@ public class Merger
         if(!intermediateIndex.isEmpty()){
             while(!intermediateIndex.isEmpty()){
                 System.out.println(intermediateIndex.isEmpty());
-                mergePostingList(getMinPostings(intermediateIndex), finalIndex, finalLexicon);
+                mergePostingList(getMinPostings());
             }
         }
-        //if we are here we have to save the last part of the LinkedHashMap that we did not save before, because this part
-        //did not full the memory yet
-        saveMergedIndex(finalIndex,finalLexicon);
+
+        docIdChannel.close(); // Close the writer to save changes
+        freqsChannel.close(); // Close the writer to save changes
     }
+
 
     /**
      * it takes the first term in lexicographically order inside the intermediateIndex and return all the postingLists of that term
-     * @param intermediateIndex priorityQueue in which we insert progressively the posting list of a single line of each intermediateIndex
      * @return PriorityQueue of the postingList of that term
      * @throws IOException
      */
 
-    private static PriorityQueue<PostingList> getMinPostings(PriorityQueue<PostingList> intermediateIndex) throws IOException {
+    private static PriorityQueue<PostingList> getMinPostings() throws IOException {
 
         PriorityQueue<PostingList> matchingQueue = new PriorityQueue<>(Comparator.comparing(PostingList::getTerm));
 
@@ -118,23 +155,21 @@ public class Merger
     /**
      * this function makes the merge of the postingList of the same terms to generate the finalIndex
      *
-     * @param intermediateIndex is the priority queue with all the postingList in lexicographical order of term
-     * @param finalIndex
-     * @param finalLexicon
+     * @param minTermIndex is the priority queue with all the postingList of the first term in the intermediateIndex in lexicographical order
      * @throws IOException
      */
-    private static void mergePostingList(PriorityQueue<PostingList> intermediateIndex, LinkedHashMap<String, PostingList> finalIndex, LinkedHashMap<String, LexiconEntry> finalLexicon) throws IOException {
+    private static void mergePostingList(PriorityQueue<PostingList> minTermIndex) throws IOException {
 
-        PostingList intermediatePostingList=intermediateIndex.poll();
+        PostingList intermediatePostingList=minTermIndex.poll();
 
         if(intermediatePostingList!=null) {
             PostingList finalPostingList = new PostingList(intermediatePostingList.getTerm(), intermediatePostingList.getPostings());
             LexiconEntry lexEntry = new LexiconEntry(intermediatePostingList.getTerm());
 
 
-            while (!intermediateIndex.isEmpty()) {
+            while (!minTermIndex.isEmpty()) {
                 //we have to merge
-                finalPostingList.appendList(intermediateIndex.poll()); //this insert the posting in order way (respect to docId)
+                finalPostingList.appendList(minTermIndex.poll()); //this insert the posting in order way (respect to docId)
             }
 
             ////we have to add statistic of the term on the lexicon file
@@ -152,14 +187,7 @@ public class Merger
                     lexEntry.setMaxTfidf(maxTf); //in the setMaxTfidf it will compute the MaxTfidf
                 }
             }
-            finalIndex.put(finalPostingList.getTerm(), finalPostingList);
-            finalLexicon.put(lexEntry.getTerm(), lexEntry);
-            if(controlMemory()){
-                //the memory is going to become full
-                saveMergedIndex(finalIndex, finalLexicon);
-                finalIndex.clear();
-                finalLexicon.clear();
-            }
+            saveMergedIndex(finalPostingList,lexEntry);
         }
     }
 
@@ -189,87 +217,61 @@ public class Merger
      *              (i) takes the LinkedHashMap of the finalIndex and wrote it on two different files, one for the DocId of the posting lists,
      *                  and one for the Freq of the posting lists.
      *              (ii) add the offsets within the invertedIndex files from which the posting lists of the specific term start
-     * @param finalIndex
-     * @param finalLexicon
+     * @param finalPostingList
+     * @param lexEntry
      */
-    private static void saveMergedIndex(LinkedHashMap<String, PostingList> finalIndex, LinkedHashMap<String, LexiconEntry> finalLexicon) {
-
-        String pathDocId="indexer/data/inv_index_docId.dat";
-        String pathFreq="indexer/data/inv_index_freq.dat";
-
-        try {
-
-            FileChannel docIdChannel=(FileChannel) Files.newByteChannel(Paths.get(pathDocId),
-                    StandardOpenOption.WRITE,
-                    StandardOpenOption.READ,
-                    StandardOpenOption.CREATE);
-
-            FileChannel freqsChannel=(FileChannel) Files.newByteChannel(Paths.get(pathFreq),
-                    StandardOpenOption.WRITE,
-                    StandardOpenOption.READ,
-                    StandardOpenOption.CREATE);
+    private static void saveMergedIndex(PostingList finalPostingList,LexiconEntry lexEntry) throws IOException {
 
 
-            for(Map.Entry<String,PostingList> entry:finalIndex.entrySet()) {
+            int[] docIds=new int[finalPostingList.getPostings().size()];   //number of posting will be also the number of freqs and docIds
+            int[] freqs=new int[finalPostingList.getPostings().size()];
 
-                PostingList finalPostingList=new PostingList(entry.getValue().toString());
+            int postingPos=0;
 
-                int[] docIds=new int[finalPostingList.getPostings().size()];   //number of posting will be also the number of freqs and docIds
-                int[] freqs=new int[finalPostingList.getPostings().size()];
+            //construct the array of docId and freqs
+            for(Posting post: finalPostingList.getPostings()){
 
-                int postingPos=0;
-
-                //construct the array of docId and freqs
-                for(Posting post: finalPostingList.getPostings()){
-
-                    docIds[postingPos]=post.getDocId();
-                    freqs[postingPos]=post.getFrequency();
-                    postingPos++;
-
-                }
-                byte[] compressedDocId= VariableByteCompressor.compressArrayInt(docIds);
-                byte[] compressedFreq=UnaryCompressor.compressArrayInt(freqs);
-                docIdChannel.write(ByteBuffer.wrap(compressedDocId));
-                freqsChannel.write(ByteBuffer.wrap(compressedFreq));
-
-                //set offset inside lexiconEntry
-                LexiconEntry lexEntry=finalLexicon.get(finalPostingList.getTerm());
-                if(lexEntry!=null) {
-                    lexEntry.setOffsetIndexDocId(offsetDocId);
-                    lexEntry.setOffsetIndexFreq(offsetFreq);
-                    lexEntry.setDocIdSize(compressedDocId.length);
-                    lexEntry.setFreqSize(compressedFreq.length);
-                }
-                offsetDocId+=compressedDocId.length;
-                offsetFreq+=compressedFreq.length;
+                docIds[postingPos]=post.getDocId();
+                freqs[postingPos]=post.getFrequency();
+                postingPos++;
 
             }
-            docIdChannel.close(); // Close the writer to save changes
-            freqsChannel.close(); // Close the writer to save changes
+            byte[] compressedDocId= VariableByteCompressor.compressArrayInt(docIds);
+            byte[] compressedFreq=UnaryCompressor.compressArrayInt(freqs);
+            docIdChannel.write(ByteBuffer.wrap(compressedDocId));
+            freqsChannel.write(ByteBuffer.wrap(compressedFreq));
 
-            List<String> inputArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
+            //set offset inside lexiconEntry
 
-            boolean isDebugging = inputArguments.toString().contains("-agentlib:jdwp");
+            if(lexEntry!=null) {
+                lexEntry.setOffsetIndexDocId(offsetDocId);
+                lexEntry.setOffsetIndexFreq(offsetFreq);
+                lexEntry.setDocIdSize(compressedDocId.length);
+                lexEntry.setFreqSize(compressedFreq.length);
+            }
+            offsetDocId+=compressedDocId.length;
+            offsetFreq+=compressedFreq.length;
+
+
 
             if (isDebugging) {
-                System.out.println("Debugging mode");
-                saveMergedIndexDebugging(finalIndex,finalLexicon);
+                //System.out.println("Debugging mode");
+                saveMergedIndexDebugging(finalPostingList,lexEntry);
             } else {
-                System.out.println("Not in debugging mode");
-                writeLexicon(finalLexicon);
+                //System.out.println("Not in debugging mode");
+                if(lexEntry!=null)
+                    positionTerm=lexEntry.writeLexiconEntry(positionTerm,lexiconChannel);
             }
             //System.out.println("Data has been written to " + path);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
     }
 
     /**
      * This function takes all the lexiconEntry related to the finalIndex and wrote that on the lexicon file
-     * @param finalLexicon is the LinkedHashMap composed by term, and lexiconEntry of that term
+     * @param lex  lexiconEntry of that term
      * @throws IOException
      */
-    private static void writeLexicon(LinkedHashMap<String, LexiconEntry> finalLexicon) throws IOException {
+    private static void writeLexicon(LexiconEntry lex) throws IOException {
 
 
         FileChannel lexicon=(FileChannel) Files.newByteChannel(Paths.get(LEXICON_PATH),
@@ -277,24 +279,24 @@ public class Merger
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
 
-        for(LexiconEntry lex: finalLexicon.values()){
-            positionTerm=lex.writeLexiconEntry(positionTerm,lexicon);
-        }
+
+        positionTerm=lex.writeLexiconEntry(positionTerm,lexicon);
+
 
     }
 
 
-    private static void saveMergedIndexDebugging(LinkedHashMap<String, PostingList> finalIndex, LinkedHashMap<String, LexiconEntry> finalLexicon) {
+    private static void saveMergedIndexDebugging(PostingList finalIndex, LexiconEntry finalLexicon) {
 
 
         try {
             File file = new File(INV_INDEX_DEBUG);
-            FileWriter fileWriter = new FileWriter(file);
+            FileWriter fileWriter = new FileWriter(file,true);
             BufferedWriter writer = new BufferedWriter(fileWriter);
 
-            for(Map.Entry<String,PostingList> entry:finalIndex.entrySet()) {
-                writer.write(entry.getValue().toString());
-            }
+
+            writer.write(finalIndex.toString());
+
             writer.close(); // Close the writer to save changes
 
         } catch (IOException e) {
@@ -305,12 +307,12 @@ public class Merger
 
         try {
             File file = new File(LEXICON_DEBUG);
-            FileWriter fileWriter = new FileWriter(file);
+            FileWriter fileWriter = new FileWriter(file,true);
             BufferedWriter writer = new BufferedWriter(fileWriter);
 
-            for(Map.Entry<String, LexiconEntry> entry:finalLexicon.entrySet()) {
-                writer.write(entry.getValue().toString());
-            }
+
+            writer.write(finalLexicon.toString());
+
             writer.close(); // Close the writer to save changes
 
         } catch (IOException e) {
