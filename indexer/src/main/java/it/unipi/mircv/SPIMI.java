@@ -26,6 +26,7 @@ public class SPIMI {
         int docID = 1;
         int block_counter = 1;
         boolean terminationFlag = false;
+        int docLenAccumulator = 0;
 
         while (!terminationFlag) {
 
@@ -44,6 +45,8 @@ public class SPIMI {
                     continue;
 
                 tokens = docPIDTokens[1].split(" ");
+                docLenAccumulator += tokens.length;
+
 
                 for (String token : tokens) {
 
@@ -74,6 +77,8 @@ public class SPIMI {
 
         }
         br.close();
+        DocumentIndex.setAVDL((double) docLenAccumulator/docID-1);
+        DocumentIndex.setCollectionSize(docID-1);
     }
 
 

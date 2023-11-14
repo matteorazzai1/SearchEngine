@@ -1,49 +1,43 @@
 package it.unipi.mircv;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static it.unipi.mircv.Utils.minDocID;
-import static it.unipi.mircv.Utils.queryToDict;
-import static java.lang.Float.POSITIVE_INFINITY;
-import static java.lang.Math.log;
+import static it.unipi.mircv.Utils.*;
+import static java.lang.Math.log10;
 
 public class Ranking {
 
     //index is fine as a list, since we do not need to access a specific entry, while the lexicon entry is needed as
     //Map because we need the IDF of a specific term
-    public static HashMap<Integer, Float> DAAT(LinkedList<PostingList> index, LinkedList<LexiconEntry> entries, String query){
+    public static PriorityQueue<Map.Entry<Integer, Double>> DAAT(LinkedList<PostingList> index, LinkedList<LexiconEntry> lexiconEntries, String query, boolean isBM25){
         HashMap<String, Integer> processedQuery = queryToDict(query);
-        HashMap<Integer, Float> finalScores = new HashMap<>();
+        PriorityQueue<Map.Entry<Integer, Double>> finalScores = new PriorityQueue<>(Map.Entry.comparingByValue());
         Map<String, Integer> positions = index.stream()
                 .collect(Collectors.toMap(PostingList::getTerm, term -> 0));
-        Map<String, Double> lexiconMap = entries.stream()
+        Map<String, Double> lexiconMap = lexiconEntries.stream()
                 .collect(Collectors.toMap(LexiconEntry::getTerm, LexiconEntry::getIdf));
 
         int minID = minDocID(index, (HashMap<String, Integer>) positions);
-        float scoreAccumulator;
+        double scoreAccumulator;
         Posting currentDoc;
 
-        while(minID != (int) POSITIVE_INFINITY){
+        while(minID != Integer.MAX_VALUE){
             scoreAccumulator = 0;
             for (PostingList p : index){
                 if ( p.getPostings().size() > positions.get(p.getTerm())){
                     currentDoc = p.getPostings().get(positions.get(p.getTerm()));
                     if (currentDoc.getDocId() == minID){
-                        scoreAccumulator += processedQuery.get(p.getTerm()) *
-                                (1 + log(currentDoc.getFrequency()) * log(lexiconMap.get(p.getTerm())));
+                        scoreAccumulator += scoringFunction(isBM25, processedQuery.get(p.getTerm()), currentDoc.getFrequency(),
+                                lexiconMap.get(p.getTerm()), DocumentIndex.getDocs().get(minID).getLength());
                         positions.put(p.getTerm(), positions.get(p.getTerm()) + 1);
                     }
                 }
             }
-            finalScores.put(minID, scoreAccumulator);
+            finalScores.add(new AbstractMap.SimpleEntry<>(minID, scoreAccumulator));
             minID = minDocID(index, (HashMap<String, Integer>) positions);
         }
-        return   finalScores.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e1, LinkedHashMap::new));
+        return finalScores;
     }
 
     public static void main(String[] args){
@@ -63,16 +57,18 @@ public class Ranking {
         LexiconEntry l2 = new LexiconEntry("duck");
         LexiconEntry l3 = new LexiconEntry("recipe");
 
-        l1.setIdf(0.65);
-        l2.setIdf(0.18);
-        l3.setIdf(0.61);
+        /*l1.setIDF(log10(15));
+        l2.setIDF(log10(8));
+        l3.setIDF(log10(12));*/
 
         entries.add(l1);
         entries.add(l2);
         entries.add(l3);
 
 
-        System.out.println(DAAT(index, entries, query));
+        System.out.println(DAAT(index, entries, query, false));
+        //TODO eliminare setIDF sopra e modificare a riga 32 il parametro doclen
+        //
 
 
     }

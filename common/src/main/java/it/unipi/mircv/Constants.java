@@ -6,4 +6,6 @@ public class Constants {
     public static final String PATH_TO_QUERIES = "tester/data/msmarco-test2020-queries.tsv.gz";
 
     public static int block_number;
+    public static final float k1 = 1.5f;
+    public static final float b = 0.75f;
 }

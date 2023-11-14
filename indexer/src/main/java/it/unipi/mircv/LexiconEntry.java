@@ -23,7 +23,6 @@ public class LexiconEntry {
 
         private int docIdSize=0; //size of the term posting list in the docId file of the Inverted index
         private int freqSize=0;  //size of the term posting list in the freq file of the Inverted index
-        private double CollectionSize=1000;  //TODO we have to delete it and substitute with the right collectionsize
 
         public static final long ENTRY_SIZE_LEXICON = 64+(4+8+4+4+8+8+8+4+4); //64 byte for the term, 4 for int values and 8 for double and long
 
@@ -79,8 +78,12 @@ public class LexiconEntry {
         this.df = df;
     }
     public void setIdf(double df) {
-        this.idf = Math.log10(CollectionSize/df); //TODO we have to set the right collectionSize
+        this.idf = Math.log10(DocumentIndex.getCollectionSize()/df);
     }
+
+    /*public void setIDF(double idf){
+        this.idf = idf;
+    }*/
 
     public void setDocIdSize(int docIdSize) {
         this.docIdSize = docIdSize;
