@@ -5,8 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import static it.unipi.mircv.Constants.INV_INDEX_DEBUG;
-import static it.unipi.mircv.Constants.LEXICON_DEBUG;
+import static it.unipi.mircv.Constants.*;
 
 public class FileUtils {
     public static void clearDebugFiles(){
@@ -38,4 +37,18 @@ public class FileUtils {
     }
 
 
+    public static Long retrieveFileSize() {
+        File file = new File(LEXICON_PATH);
+
+        long fileSizeInBytes = 0;
+
+        if (file.exists()) {
+            fileSizeInBytes = file.length();
+            //System.out.println("File size in bytes: " + fileSizeInBytes);
+        } else {
+            //System.out.println("File does not exist");
+            fileSizeInBytes= Long.parseLong(null);
+        }
+        return fileSizeInBytes;
+    }
 }

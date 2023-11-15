@@ -100,7 +100,7 @@ public class PostingList {
     public static ArrayList<Posting> retrievePostingList(String term) throws IOException {
 
         //retrieve lexicon from disk
-        Lexicon lexicon=new Lexicon(); //this function retrieve the lexicon directly from disk
+        /*Lexicon lexicon=new Lexicon(); //this function retrieve the lexicon directly from disk
         System.out.println("lexicon recuperato");
 
         LexiconEntry lexEntry=lexicon.getLexicon().get(term);
@@ -112,7 +112,10 @@ public class PostingList {
         }
         else{
             System.out.println("termine trovato");
-        }
+        }*/
+
+        LexiconEntry lexEntry=Lexicon.retrieveEntryFromDisk(term);
+        System.out.println(lexEntry);
 
         byte[] docIdCompressed=new byte[lexEntry.getDocIdSize()];
         byte[] freqCompressed=new byte[lexEntry.getFreqSize()];

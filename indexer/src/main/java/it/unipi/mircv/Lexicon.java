@@ -6,9 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.Objects;
 
 import static it.unipi.mircv.Constants.LEXICON_PATH;
 import static it.unipi.mircv.LexiconEntry.ENTRY_SIZE_LEXICON;
+import static it.unipi.mircv.LexiconEntry.readLexEntryFromDisk;
 
 public class Lexicon {
 
@@ -29,7 +31,7 @@ public class Lexicon {
     /**
      * costructor of lexicon reading it from disk
      */
-    public Lexicon() throws IOException {
+    /*public Lexicon() throws IOException {
 
         this.lexicon=new HashMap<>();
 
@@ -47,5 +49,53 @@ public class Lexicon {
         }
         lexiconFC.close();
         //System.out.println("lexicon chiuso");
+    }*/
+
+    /**
+     * binary search on lexicon file to find the entry of the term
+     * @param term which we are searching the entry in lexicon
+     * @return the lexiconEntry of the term passed to the function
+     */
+    public static LexiconEntry retrieveEntryFromDisk(String term) throws IOException {
+
+        FileChannel lexiconFC=(FileChannel) Files.newByteChannel(Paths.get(LEXICON_PATH),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
+
+        long lexiconSize=FileUtils.retrieveFileSize();
+
+
+        long startInterval=0;
+        long endInterval=lexiconSize;
+
+
+        while(startInterval<=endInterval) {
+
+            long midSize = (startInterval+endInterval) / 2;
+
+
+            long positionTerm = ((midSize / ENTRY_SIZE_LEXICON)) * ENTRY_SIZE_LEXICON; //it takes the quotient integer of the division, and it multiplies fo ENTRY_SIZE_LEXICON to find the starting point of the position of the term
+
+
+            LexiconEntry lexEntry = LexiconEntry.readLexEntryFromDisk(positionTerm, lexiconFC);
+
+
+            int comparison = term.compareTo(lexEntry.getTerm());
+
+            if (comparison < 0) {
+                //the term that we are searching is lexicographically smaller than the retrieved term
+                endInterval=midSize;
+
+            } else if (comparison > 0) {
+                //the term that we are searching is lexicographically bigger than the retrieved term
+                startInterval=midSize;
+            } else {
+                //the two terms are equal
+                return lexEntry;
+            }
+        }
+        return null;
     }
+
 }
