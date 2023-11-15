@@ -14,8 +14,7 @@ public class Tester {
         String query_choice;
         String disjunctive_type = "";
         String ranking_type;
-        Lexicon lexicon = new Lexicon();
-        HashMap<String, LexiconEntry> lex_list= lexicon.getLexicon();
+
         LinkedList<LexiconEntry> entries=new LinkedList<>();
         LinkedList<PostingList> index = new LinkedList<>();
         //TODO operazioni di setup
@@ -71,7 +70,7 @@ public class Tester {
                     System.out.println("term: "+term);
                     PostingList post = new PostingList(term, PostingList.retrievePostingList(term));
                     index.add(post);
-                    entries.add(lex_list.get(term));
+                    entries.add(Lexicon.retrieveEntryFromDisk(term));
                 }
                 long query_start = 0;
                 if(query_choice.equals("1")){//Conjunctive
@@ -86,7 +85,7 @@ public class Tester {
                     if(disjunctive_type.equals("1")){//DAAT
                         if(ranking_type.equals("1")){//TFIDF
                             query_start=System.currentTimeMillis();
-                            DAAT(index, entries , query);
+                            DAAT(index, entries , query,false);
                             //TODO execute disjunctive with DAAT and TFIDF
                         }else{//BM25
                             query_start=System.currentTimeMillis();
