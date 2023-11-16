@@ -1,8 +1,10 @@
 package it.unipi.mircv;
+import it.unipi.mircv.baseStructure.DocumentIndex;
+import it.unipi.mircv.baseStructure.PostingList;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import static java.lang.Float.POSITIVE_INFINITY;
 import static java.lang.Math.log10;
 
 public class Utils {
@@ -35,7 +37,7 @@ public class Utils {
     }
 
     private static double BM25 (int termQueryFrequency, int termDocFrequency, double termIDF, int docLen){
-        return termQueryFrequency * ((termDocFrequency/((Constants.k1*((1-Constants.b) + (Constants.b*docLen/DocumentIndex.getAVDL())))+termDocFrequency)) * (termIDF));
+        return termQueryFrequency * ((termDocFrequency/((Constants.k1*((1-Constants.b) + (Constants.b*docLen/ DocumentIndex.getAVDL())))+termDocFrequency)) * (termIDF));
     }
 
     public static double scoringFunction(boolean isBM25, int termQueryFrequency, int termDocFrequency, double termIDF, int docLen){

@@ -4,6 +4,7 @@ target/
 !**/src/test/**/target/
 indexer/target/
 common/target/
+indexer/data/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

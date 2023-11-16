@@ -1,4 +1,6 @@
-package it.unipi.mircv;
+package it.unipi.mircv.baseStructure;
+
+import it.unipi.mircv.FileUtils;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -6,11 +8,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
-import java.util.Objects;
 
 import static it.unipi.mircv.Constants.LEXICON_PATH;
-import static it.unipi.mircv.LexiconEntry.ENTRY_SIZE_LEXICON;
-import static it.unipi.mircv.LexiconEntry.readLexEntryFromDisk;
+import static it.unipi.mircv.baseStructure.LexiconEntry.ENTRY_SIZE_LEXICON;
 
 public class Lexicon {
 
@@ -63,7 +63,7 @@ public class Lexicon {
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
 
-        long lexiconSize=FileUtils.retrieveFileSize();
+        long lexiconSize= FileUtils.retrieveFileSize();
 
 
         long startInterval=0;
