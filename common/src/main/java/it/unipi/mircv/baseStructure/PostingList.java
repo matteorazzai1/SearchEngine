@@ -1,7 +1,7 @@
-package it.unipi.mircv;
+package it.unipi.mircv.baseStructure;
 
-import it.unipi.mircv.compression.UnaryCompressor;
-import it.unipi.mircv.compression.VariableByteCompressor;
+import it.unipi.mircv.baseStructure.compression.UnaryCompressor;
+import it.unipi.mircv.baseStructure.compression.VariableByteCompressor;
 
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 
 import static it.unipi.mircv.Constants.INV_INDEX_DOCID;

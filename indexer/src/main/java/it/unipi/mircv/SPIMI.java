@@ -1,9 +1,8 @@
 package it.unipi.mircv;
 
+import it.unipi.mircv.baseStructure.*;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-
-import it.unipi.mircv.Constants;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

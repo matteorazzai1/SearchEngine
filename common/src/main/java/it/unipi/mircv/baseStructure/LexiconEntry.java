@@ -1,13 +1,10 @@
-package it.unipi.mircv;
+package it.unipi.mircv.baseStructure;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 
 public class LexiconEntry {
@@ -24,7 +21,12 @@ public class LexiconEntry {
         private int docIdSize=0; //size of the term posting list in the docId file of the Inverted index
         private int freqSize=0;  //size of the term posting list in the freq file of the Inverted index
 
+        private long descriptorOffset=0; //starting position of the blockDescriptor into the file
+        private int numBlocks=1; //number of blocks to split the list into
+
         public static final long ENTRY_SIZE_LEXICON = 64+(4+8+4+4+8+8+8+4+4); //64 byte for the term, 4 for int values and 8 for double and long
+
+
 
     /**
      * Constructor of the LexiconEntry
@@ -199,7 +201,22 @@ public class LexiconEntry {
 
         return term + "\t" +
                 df + ":" + idf + ":" + termCollFreq + ":" + maxTf + ":" + maxTfidf + ":" + offsetIndexDocId + ":" + offsetIndexFreq + ":" +
-                docIdSize + ":" + freqSize + "\n";
+                docIdSize + ":" + freqSize + ":"+descriptorOffset+":"+ numBlocks+ "\n";
     }
 
+    public long getDescriptorOffset() {
+        return descriptorOffset;
+    }
+
+    public void setDescriptorOffset(long descriptorOffset) {
+        this.descriptorOffset = descriptorOffset;
+    }
+
+    public int getNumBlocks() {
+        return numBlocks;
+    }
+
+    public void setNumBlocks(int numBlocks) {
+        this.numBlocks = numBlocks;
+    }
 }

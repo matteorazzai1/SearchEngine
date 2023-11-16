@@ -1,4 +1,8 @@
 package it.unipi.mircv;
+import it.unipi.mircv.baseStructure.Lexicon;
+import it.unipi.mircv.baseStructure.LexiconEntry;
+import it.unipi.mircv.baseStructure.PostingList;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;

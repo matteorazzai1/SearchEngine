@@ -1,10 +1,14 @@
 package it.unipi.mircv;
 
+import it.unipi.mircv.baseStructure.DocumentIndex;
+import it.unipi.mircv.baseStructure.LexiconEntry;
+import it.unipi.mircv.baseStructure.Posting;
+import it.unipi.mircv.baseStructure.PostingList;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static it.unipi.mircv.Utils.*;
-import static java.lang.Math.log10;
 
 public class Ranking {
 

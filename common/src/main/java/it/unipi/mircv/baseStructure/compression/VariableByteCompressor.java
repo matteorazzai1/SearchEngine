@@ -1,4 +1,4 @@
-package it.unipi.mircv.compression;
+package it.unipi.mircv.baseStructure.compression;
 
 import java.util.ArrayList;
 
