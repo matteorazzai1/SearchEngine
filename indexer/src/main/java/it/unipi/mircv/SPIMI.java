@@ -3,8 +3,6 @@ package it.unipi.mircv;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
-import it.unipi.mircv.Constants;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -77,10 +75,10 @@ public class SPIMI {
 
         }
         br.close();
+        Constants.numIntermediateIndexes = block_counter;
         DocumentIndex.setAVDL((double) docLenAccumulator/docID-1);
         DocumentIndex.setCollectionSize(docID-1);
     }
-
 
     private static void flushLexicon(HashMap<String, PostingList> postings, int block_counter) throws IOException {
         FileWriter bf = null;
@@ -110,14 +108,11 @@ public class SPIMI {
         }
     }
 
-        private static void flushIndex(HashMap<String, PostingList> postings, boolean isDebug, int block_counter) throws IOException {
-
-        //we need block_counter in the merge function, to know how mani intermediateIndexes we have to take
-            Constants.block_number=block_counter;
+        private static void flushIndex(HashMap<String, PostingList> postings, boolean isDebug, int numIntermediateIndexes) throws IOException {
 
         FileWriter bf = null;
         try {
-            bf = new FileWriter(PATH_TO_INTERMEDIATE_INDEX + block_counter + ".txt", StandardCharsets.UTF_8);
+            bf = new FileWriter(PATH_TO_INTERMEDIATE_INDEX + numIntermediateIndexes + ".txt", StandardCharsets.UTF_8);
             for (Map.Entry<String, PostingList> entry : postings.entrySet()) {
                 StringBuilder line = new StringBuilder(entry.getKey() + "\t");
                 for (Posting p : entry.getValue().getPostings()) {
