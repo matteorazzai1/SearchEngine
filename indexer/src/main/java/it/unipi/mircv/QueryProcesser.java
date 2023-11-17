@@ -1,12 +1,17 @@
 package it.unipi.mircv;
 
+import it.unipi.mircv.baseStructure.PostingList;
+import it.unipi.mircv.baseStructure.SkippingBlock;
+
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Scanner;
+
+import static it.unipi.mircv.Constants.BLOCK_PATH;
+import static it.unipi.mircv.Constants.INV_INDEX_DOCID;
 
 public class QueryProcesser {
     public static void main(String[] args) throws IOException {

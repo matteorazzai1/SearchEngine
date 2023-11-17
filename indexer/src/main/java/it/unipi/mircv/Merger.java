@@ -1,7 +1,11 @@
 package it.unipi.mircv;
 
-import it.unipi.mircv.compression.UnaryCompressor;
-import it.unipi.mircv.compression.VariableByteCompressor;
+import it.unipi.mircv.baseStructure.LexiconEntry;
+import it.unipi.mircv.baseStructure.Posting;
+import it.unipi.mircv.baseStructure.PostingList;
+import it.unipi.mircv.baseStructure.SkippingBlock;
+import it.unipi.mircv.baseStructure.compression.UnaryCompressor;
+import it.unipi.mircv.baseStructure.compression.VariableByteCompressor;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -13,9 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.nio.file.StandardOpenOption;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import static it.unipi.mircv.Constants.*;
 
@@ -26,6 +27,8 @@ public class Merger
     private static long offsetDocId=0;
     private static long offsetFreq=0;
     private static long positionTerm=0;
+
+    private static long positionBlock=0;
     private static PriorityQueue<PostingList> intermediateIndex=new PriorityQueue<>(Comparator.comparing(PostingList::getTerm));
 
     private static FileChannel docIdChannel=null;
@@ -33,6 +36,8 @@ public class Merger
     private static FileChannel freqsChannel=null;
 
     private static FileChannel lexiconChannel=null;
+
+    private static FileChannel blockChannel=null;
 
     static boolean isDebugging = false;
 
@@ -75,6 +80,11 @@ public class Merger
                 StandardOpenOption.CREATE);
 
         lexiconChannel=(FileChannel) Files.newByteChannel(Paths.get(LEXICON_PATH),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
+
+        blockChannel=(FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
@@ -236,33 +246,77 @@ public class Merger
                 postingPos++;
 
             }
-            byte[] compressedDocId= VariableByteCompressor.compressArrayInt(docIds);
-            byte[] compressedFreq=UnaryCompressor.compressArrayInt(freqs);
-            docIdChannel.write(ByteBuffer.wrap(compressedDocId));
-            freqsChannel.write(ByteBuffer.wrap(compressedFreq));
 
-            //set offset inside lexiconEntry
+            int block_size = (int) Math.ceil(Math.sqrt(finalPostingList.getPostings().size()));
+            int num_blocks = (int) Math.ceil((double)(finalPostingList.getPostings().size()/block_size));
 
-            if(lexEntry!=null) {
-                lexEntry.setOffsetIndexDocId(offsetDocId);
-                lexEntry.setOffsetIndexFreq(offsetFreq);
-                lexEntry.setDocIdSize(compressedDocId.length);
-                lexEntry.setFreqSize(compressedFreq.length);
+            int docIdSize=0;
+            int freqSize=0;
+
+            lexEntry.setDescriptorOffset(positionBlock);
+            lexEntry.setNumBlocks(num_blocks);
+
+            ArrayList<Integer> docIdsBlock;
+            ArrayList<Integer> freqBlock;
+
+            for(int currentBlock=0; currentBlock<num_blocks; currentBlock++) {
+
+
+                docIdsBlock=new ArrayList<>();
+                freqBlock=new ArrayList<>();
+
+
+                for (int j = 0; j < block_size; j++) {
+                    if (currentBlock * block_size + j < finalPostingList.getPostings().size()) {
+                        docIdsBlock.add(docIds[currentBlock * block_size + j]);
+                        freqBlock.add(freqs[currentBlock * block_size + j]);
+                    }
+                }
+
+
+                byte[] compressedDocId = VariableByteCompressor.compressArrayInt(docIdsBlock.stream()
+                        .mapToInt(Integer::intValue)
+                        .toArray());
+                byte[] compressedFreq = UnaryCompressor.compressArrayInt(freqBlock.stream()
+                        .mapToInt(Integer::intValue)
+                        .toArray());
+                docIdChannel.write(ByteBuffer.wrap(compressedDocId));
+                freqsChannel.write(ByteBuffer.wrap(compressedFreq));
+
+
+
+                //create skipping block
+
+                SkippingBlock skippingBlock=new SkippingBlock(docIdsBlock.get(docIdsBlock.size()-1),offsetDocId,compressedDocId.length,offsetFreq,compressedFreq.length,docIdsBlock.size());
+                positionBlock=skippingBlock.writeSkippingBlock(positionBlock,blockChannel);
+                skippingBlock.writeDebugSkippingBlock(finalPostingList.getTerm());
+
+                offsetDocId += compressedDocId.length;
+                offsetFreq += compressedFreq.length;
+                docIdSize+=compressedDocId.length;
+                freqSize+=compressedFreq.length;
+
             }
-            offsetDocId+=compressedDocId.length;
-            offsetFreq+=compressedFreq.length;
+
+                //set offset inside lexiconEntry
+
+                if (lexEntry != null) {
+                    lexEntry.setOffsetIndexDocId(offsetDocId-docIdSize);
+                    lexEntry.setOffsetIndexFreq(offsetFreq-freqSize);
+                    lexEntry.setDocIdSize(docIdSize);
+                    lexEntry.setFreqSize(freqSize);
+                }
 
 
-
-            if (isDebugging) {
-                //System.out.println("Debugging mode");
-                saveMergedIndexDebugging(finalPostingList,lexEntry);
-            } else {
-                //System.out.println("Not in debugging mode");
-                if(lexEntry!=null)
-                    positionTerm=lexEntry.writeLexiconEntry(positionTerm,lexiconChannel);
-            }
-            //System.out.println("Data has been written to " + path);
+                if (isDebugging) {
+                    //System.out.println("Debugging mode");
+                    saveMergedIndexDebugging(finalPostingList, lexEntry);
+                } else {
+                    //System.out.println("Not in debugging mode");
+                    if (lexEntry != null)
+                        positionTerm = lexEntry.writeLexiconEntry(positionTerm, lexiconChannel);
+                }
+                //System.out.println("Data has been written to " + path);
 
     }
 

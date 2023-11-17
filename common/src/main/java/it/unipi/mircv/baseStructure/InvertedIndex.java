@@ -1,4 +1,4 @@
-package it.unipi.mircv;
+package it.unipi.mircv.baseStructure;
 
 import java.util.HashMap;
 

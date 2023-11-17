@@ -1,7 +1,6 @@
-package it.unipi.mircv;
+package it.unipi.mircv.baseStructure;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 
 public class DocumentIndex {
     private static ArrayList<Document> docs;

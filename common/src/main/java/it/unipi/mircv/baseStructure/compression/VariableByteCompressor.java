@@ -1,4 +1,4 @@
-package it.unipi.mircv.compression;
+package it.unipi.mircv.baseStructure.compression;
 
 import java.util.ArrayList;
 
@@ -27,7 +27,7 @@ public class VariableByteCompressor {
                 int end=(binaryValue.length() - (7 * i));
                 int start = end - 7;
                 StringBuilder byteSubstring=new StringBuilder();
-                if(start <0){
+                if(start <=0){
                     start=0;
                     byteSubstring.append("0".repeat(Math.max(0, (8 - binaryValue.substring(start, end).length())))); //equivalent of a for that put many zeros how many are the bit left to arrive to 8
                     byteSubstring.append(binaryValue, start, end); //substring from start to end of the string binaryValue
