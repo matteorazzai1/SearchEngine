@@ -24,7 +24,7 @@ public class LexiconEntry {
         private long descriptorOffset=0; //starting position of the blockDescriptor into the file
         private int numBlocks=1; //number of blocks to split the list into
 
-        public static final long ENTRY_SIZE_LEXICON = 64+(4+8+4+4+8+8+8+4+4); //64 byte for the term, 4 for int values and 8 for double and long
+        public static final long ENTRY_SIZE_LEXICON = 64+(4+8+4+4+8+8+8+4+4+8+4); //64 byte for the term, 4 for int values and 8 for double and long
 
 
 
@@ -150,6 +150,8 @@ public class LexiconEntry {
         buffer.putInt(freqSize);
         buffer.putLong(offsetIndexDocId);
         buffer.putLong(offsetIndexFreq);
+        buffer.putLong(descriptorOffset);
+        buffer.putInt(numBlocks);
 
         return positionTerm+ ENTRY_SIZE_LEXICON; //return position from which we have to write
 
@@ -192,6 +194,8 @@ public class LexiconEntry {
         lexEntry.freqSize = buffer.getInt();
         lexEntry.offsetIndexDocId = buffer.getLong();
         lexEntry.offsetIndexFreq = buffer.getLong();
+        lexEntry.descriptorOffset = buffer.getLong();
+        lexEntry.numBlocks = buffer.getInt();
 
         return lexEntry;
     }
