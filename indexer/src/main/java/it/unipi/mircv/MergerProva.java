@@ -4,8 +4,8 @@ import it.unipi.mircv.baseStructure.LexiconEntry;
 import it.unipi.mircv.baseStructure.Posting;
 import it.unipi.mircv.baseStructure.PostingList;
 import it.unipi.mircv.baseStructure.SkippingBlock;
-import it.unipi.mircv.baseStructure.compression.UnaryCompressor;
-import it.unipi.mircv.baseStructure.compression.VariableByteCompressor;
+import it.unipi.mircv.compression.UnaryCompressor;
+import it.unipi.mircv.compression.VariableByteCompressor;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
