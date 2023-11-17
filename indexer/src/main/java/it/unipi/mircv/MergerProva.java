@@ -50,7 +50,7 @@ public class MergerProva
         }
 
         //TODO togliere commento a questa riga sotto, eliminando quella successiva
-        //for(int i=0; i<Constants.block_number;i++){
+        //for(int i=0; i<numIntermediateIndexes;i++){
         for(int i=1;i<4;i++){
             filePaths.add("indexer/data/pathToOutput"+i+".txt");
         }
