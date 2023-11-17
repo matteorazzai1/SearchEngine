@@ -30,7 +30,6 @@ public class Merger
     private static long positionTerm=0;
 
     private static long positionBlock=0;
-    private static PriorityQueue<PostingList> intermediateIndex=new PriorityQueue<>(Comparator.comparing(PostingList::getTerm));
 
     private static FileChannel docIdChannel=null;
 
@@ -63,13 +62,10 @@ public class Merger
         ArrayList<String> filePaths=new ArrayList<>();
 
         //TODO togliere commento a questa riga sotto, eliminando quella successiva
-        //for(int i=0; i<Constants.block_number;i++){
-        for(int i=1;i<29;i++){
+        for(int i = 1; i< numIntermediateIndexes; i++){
             filePaths.add("indexer/data/pathToOutput"+i+".txt");
         }
 
-        //filePaths.add("indexer/data/invIndex_debug4.txt");
-        //filePaths.add("indexer/data/invIndex_debug3.txt");
 
         //open file channels
 
@@ -93,48 +89,6 @@ public class Merger
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
 
-
-        /*List<BufferedReader> bufferedReaderList=new ArrayList<>();
-        for (String filePath : filePaths) {
-
-            BufferedReader reader = new BufferedReader(new FileReader(filePath));
-            bufferedReaderList.add(reader);
-        }
-
-        int i=0;
-
-        Iterator<BufferedReader> iterator = bufferedReaderList.iterator();
-
-        while (!bufferedReaderList.isEmpty()) {
-            i++;
-            System.out.println("riga" + i);
-
-            while (iterator.hasNext()) {
-                BufferedReader reader = iterator.next();
-                String line = reader.readLine();
-
-                if (line != null) {
-                    PostingList postingList = new PostingList(line);
-                    intermediateIndex.add(postingList);
-                } else {
-                    iterator.remove(); // Remove the current reader from the list
-                }
-            }
-
-            // Reset the iterator for the next iteration
-            iterator = bufferedReaderList.iterator();
-
-            mergePostingList(getMinPostings());
-        }
-
-
-        //control intermediateIndex sia vuoto
-        if(!intermediateIndex.isEmpty()){
-            while(!intermediateIndex.isEmpty()){
-                System.out.println(intermediateIndex.isEmpty());
-                mergePostingList(getMinPostings());
-            }
-        }*/
         // Define a HashMap to hold readers and the current line for each file
         HashMap<BufferedReader, PostingList> readerLines = new HashMap<>();
 
