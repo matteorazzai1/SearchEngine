@@ -37,8 +37,8 @@ public class FileUtils {
     }
 
 
-    public static Long retrieveFileSize() {
-        File file = new File(LEXICON_PATH);
+    public static Long retrieveFileSize(String Path) {
+        File file = new File(Path);
 
         long fileSizeInBytes = 0;
 

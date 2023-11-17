@@ -63,7 +63,7 @@ public class Lexicon {
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
 
-        long lexiconSize= FileUtils.retrieveFileSize();
+        long lexiconSize= FileUtils.retrieveFileSize(LEXICON_PATH);
 
 
         long startInterval=0;

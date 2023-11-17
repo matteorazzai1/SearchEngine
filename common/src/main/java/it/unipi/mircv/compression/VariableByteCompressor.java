@@ -1,5 +1,6 @@
-package it.unipi.mircv.baseStructure.compression;
+package it.unipi.mircv.compression;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
 import static java.lang.Math.log;
@@ -113,5 +114,81 @@ public class VariableByteCompressor {
 
             return decompressedArray;
     }
+
+
+    private static byte[] integerCompression(int number){
+            if (number == 0) {
+                return new byte[]{0};
+            }
+
+            ArrayList<Byte> byteList = new ArrayList<>();
+
+            while (true) {
+                byteList.add((byte) ((number % 128)));
+                if (number <= 128) {
+                    break;
+                }
+                number /= 128;
+            }
+            //byteList.set(byteList.size()-1, (byte) (byteList.get(0) - 128));
+
+            // Reverse the list
+            byte[] reversedList = new byte[byteList.size()];
+            reversedList[0]= (byte) number;
+            for (int i = 0; i <byteList.size()-1; i++) {
+                reversedList[byteList.size()-1-i] = (byte) ((byteList.get(i))+128);
+            }
+
+            return reversedList;
+
+    }
+
+    /**
+     *
+     * @param array: input integers array
+     * @return bytes representing the input integers in variable byte encoding
+     */
+    public static byte[] compressIntArray(int[] array)  {
+        ArrayList<Byte> compressedArray = new ArrayList<>();
+
+
+        // For each element to be compressed
+        for(int number: array){
+            // Perform the compression and append the compressed output to the byte list
+            for(byte elem: integerCompression(number))
+                compressedArray.add(elem);
+        }
+
+        // Transform the arraylist to an array
+        byte[] output = new byte[compressedArray.size()];
+        for(int i = 0; i < compressedArray.size(); i++)
+            output[i] = compressedArray.get(i);
+
+        return output;
+    }
+
+    public static int[] decompressIntArray(byte[] compressedData, int n){
+
+        int[] decompressedArray = new int[n];
+
+        int i = 0;
+        int j = 0;
+        int number = 0;
+
+        while (j < n) {
+            if (compressedData[i] >= 0) {
+                number = 128 * number + compressedData[i];
+            } else {
+                number = 128 * number + (compressedData[i] + 128);
+                decompressedArray[j] = number;
+                number = 0;
+                j++;
+            }
+            i++;
+        }
+
+        return decompressedArray;
+    }
+
 
 }

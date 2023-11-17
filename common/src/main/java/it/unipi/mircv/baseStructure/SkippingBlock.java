@@ -1,6 +1,6 @@
 package it.unipi.mircv.baseStructure;
 
-import it.unipi.mircv.baseStructure.compression.VariableByteCompressor;
+import it.unipi.mircv.compression.VariableByteCompressor;
 
 import java.io.BufferedWriter;
 import java.io.File;
