@@ -61,7 +61,7 @@ public class Merger
         //Obtain all the paths of the intermediateIndex
         ArrayList<String> filePaths=new ArrayList<>();
 
-        //TODO togliere commento a questa riga sotto, eliminando quella successiva
+        
         for(int i = 1; i< numIntermediateIndexes; i++){
             filePaths.add("indexer/data/pathToOutput"+i+".txt");
         }
@@ -123,7 +123,7 @@ public class Merger
                 if (postingList.getTerm().equals(minTerm)) {
                     //we are inside a reader with the min term
                     minPosting.appendList(postingList);
-                    saveMergedIndex(minPosting);
+
                     BufferedReader reader = entry.getKey();
                     String line = reader.readLine();
                     if (line != null) {
@@ -133,6 +133,7 @@ public class Merger
                     }
                 }
             }
+            saveMergedIndex(minPosting);
 
         }
 
@@ -200,7 +201,7 @@ public class Merger
             }
 
             int block_size = (int) Math.ceil(Math.sqrt(finalPostingList.getPostings().size()));
-            int num_blocks = (int) Math.ceil((double)(finalPostingList.getPostings().size()/block_size));
+            int num_blocks = (int) Math.ceil((double)finalPostingList.getPostings().size()/block_size);
 
             int docIdSize=0;
             int freqSize=0;
@@ -241,7 +242,8 @@ public class Merger
 
                 SkippingBlock skippingBlock=new SkippingBlock(docIdsBlock.get(docIdsBlock.size()-1),offsetDocId,compressedDocId.length,offsetFreq,compressedFreq.length,docIdsBlock.size());
                 positionBlock=skippingBlock.writeSkippingBlock(positionBlock,blockChannel);
-                //skippingBlock.writeDebugSkippingBlock(finalPostingList.getTerm());
+                if(isDebugging)
+                    skippingBlock.writeDebugSkippingBlock(finalPostingList.getTerm());
 
                 offsetDocId += compressedDocId.length;
                 offsetFreq += compressedFreq.length;
