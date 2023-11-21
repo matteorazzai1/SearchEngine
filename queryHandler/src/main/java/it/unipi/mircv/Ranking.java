@@ -32,8 +32,9 @@ public class Ranking {
                 if ( p.getPostings().size() > positions.get(p.getTerm())){
                     currentDoc = p.getPostings().get(positions.get(p.getTerm()));
                     if (currentDoc.getDocId() == minID){
+                        System.out.println(DocumentIndex.getInstance().getDocs().size());
                         scoreAccumulator += scoringFunction(isBM25, processedQuery.get(p.getTerm()), currentDoc.getFrequency(),
-                                lexiconMap.get(p.getTerm()), DocumentIndex.getDocs().get(minID).getLength());
+                                lexiconMap.get(p.getTerm()), DocumentIndex.getInstance().getDocs().get(minID).getLength());
                         positions.put(p.getTerm(), positions.get(p.getTerm()) + 1);
                     }
                 }
