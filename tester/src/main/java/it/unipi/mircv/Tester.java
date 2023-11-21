@@ -1,4 +1,5 @@
 package it.unipi.mircv;
+import it.unipi.mircv.baseStructure.DocumentIndex;
 import it.unipi.mircv.baseStructure.Lexicon;
 import it.unipi.mircv.baseStructure.LexiconEntry;
 import it.unipi.mircv.baseStructure.PostingList;
@@ -93,6 +94,7 @@ public class Tester {
                             //TODO execute disjunctive with DAAT and TFIDF
                         }else{//BM25
                             query_start=System.currentTimeMillis();
+                            DAAT(index, entries , query,true);
                             //TODO execute conjunctive with DAAT and BM25
                         }
                     }else{//MaxScore

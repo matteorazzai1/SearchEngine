@@ -37,7 +37,7 @@ public class Utils {
     }
 
     private static double BM25 (int termQueryFrequency, int termDocFrequency, double termIDF, int docLen){
-        return termQueryFrequency * ((termDocFrequency/((Constants.k1*((1-Constants.b) + (Constants.b*docLen/ DocumentIndex.getAVDL())))+termDocFrequency)) * (termIDF));
+        return termQueryFrequency * ((termDocFrequency/((Constants.k1*((1-Constants.b) + (Constants.b*docLen/ DocumentIndex.getInstance().getAVDL())))+termDocFrequency)) * (termIDF));
     }
 
     public static double scoringFunction(boolean isBM25, int termQueryFrequency, int termDocFrequency, double termIDF, int docLen){

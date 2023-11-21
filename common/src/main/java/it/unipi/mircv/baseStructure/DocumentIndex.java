@@ -3,37 +3,42 @@ package it.unipi.mircv.baseStructure;
 import java.util.ArrayList;
 
 public class DocumentIndex {
-    private static ArrayList<Document> docs;
-    private static double AVDL;
-    private static int collectionSize;
+    private static DocumentIndex instance;
+    private ArrayList<Document> docs;
+    private double AVDL;
+    private int collectionSize;
 
-    public DocumentIndex(){
+    private DocumentIndex(){
         docs = new ArrayList<>();
     }
 
-    public static double getAVDL() {
+    public static DocumentIndex getInstance(){
+        if (instance == null) {
+            instance = new DocumentIndex();
+        }
+        return instance;
+    }
+
+    public static void resetInstance(){
+        instance = null;
+    }
+    public double getAVDL() {
         return AVDL;
     }
 
-    public static void setAVDL(double AVDL) {
-        DocumentIndex.AVDL = AVDL;
-    }
+    public void setAVDL(double AVDL) { DocumentIndex.getInstance().AVDL = AVDL; }
 
-    public static int getCollectionSize() {
+    public int getCollectionSize() {
         return collectionSize;
     }
 
-    public static void setCollectionSize(int collectionSize) {
-        DocumentIndex.collectionSize = collectionSize;
-    }
+    public void setCollectionSize(int collectionSize) { DocumentIndex.getInstance().collectionSize = collectionSize; }
 
-    public static ArrayList<Document> getDocs() {
+    public ArrayList<Document> getDocs() {
         return docs;
     }
 
-    public void setDocs(ArrayList<Document> docs) {
-        DocumentIndex.docs = docs;
-    }
+    public void setDocs(ArrayList<Document> docs) { DocumentIndex.getInstance().docs = docs; }
 
     public void addElement(Document c){
         docs.add(c);

@@ -4,10 +4,22 @@ import java.util.HashMap;
 
 public class InvertedIndex {
 
+    private static InvertedIndex instance;
     private HashMap<String, PostingList> PostingLists;
 
-    public InvertedIndex(){
+    private InvertedIndex(){
         PostingLists = new HashMap<>();
+    }
+
+    public static InvertedIndex getInstance(){
+        if (instance == null) {
+            instance = new InvertedIndex();
+        }
+        return instance;
+    }
+
+    public static void resetInstance(){
+        instance = null;
     }
 
     public HashMap<String, PostingList> getPostingLists() {
@@ -15,6 +27,6 @@ public class InvertedIndex {
     }
 
     public void setPostingLists(HashMap<String, PostingList> postingLists) {
-        this.PostingLists = postingLists;
+        InvertedIndex.getInstance().PostingLists = postingLists;
     }
 }

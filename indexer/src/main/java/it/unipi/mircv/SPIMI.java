@@ -29,8 +29,8 @@ public class SPIMI {
 
         while (!terminationFlag) {
 
-            InvertedIndex invertedIndex = new InvertedIndex();
-            DocumentIndex docIndex = new DocumentIndex();
+            InvertedIndex invertedIndex = InvertedIndex.getInstance();
+            DocumentIndex docIndex = DocumentIndex.getInstance();
 
             while (Runtime.getRuntime().freeMemory() > Runtime.getRuntime().totalMemory() * 20 / 100) {
                 line = (br.readLine());
@@ -71,14 +71,14 @@ public class SPIMI {
             flushLexicon(invertedIndex.getPostingLists(), block_counter);
             block_counter++;
             invertedIndex = null;
-            docIndex = null;
+            //docIndex = null;
             System.gc();
 
         }
         br.close();
         Constants.numIntermediateIndexes = block_counter;
-        DocumentIndex.setAVDL((double) docLenAccumulator/docID-1);
-        DocumentIndex.setCollectionSize(docID-1);
+        DocumentIndex.getInstance().setAVDL((double) docLenAccumulator/docID-1);
+        DocumentIndex.getInstance().setCollectionSize(docID-1);
     }
 
     private static void flushLexicon(HashMap<String, PostingList> postings, int block_counter) throws IOException {
