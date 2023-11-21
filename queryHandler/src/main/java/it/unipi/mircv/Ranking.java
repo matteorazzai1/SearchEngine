@@ -21,6 +21,7 @@ public class Ranking {
                 .collect(Collectors.toMap(PostingList::getTerm, term -> 0));
         Map<String, Double> lexiconMap = lexiconEntries.stream()
                 .collect(Collectors.toMap(LexiconEntry::getTerm, LexiconEntry::getIdf));
+        DocumentIndex docIndex = DocumentIndex.getInstance();
 
         int minID = minDocID(index, (HashMap<String, Integer>) positions);
         double scoreAccumulator;
@@ -34,7 +35,8 @@ public class Ranking {
                     if (currentDoc.getDocId() == minID){
                         System.out.println(DocumentIndex.getInstance().getDocs().size());
                         scoreAccumulator += scoringFunction(isBM25, processedQuery.get(p.getTerm()), currentDoc.getFrequency(),
-                                lexiconMap.get(p.getTerm()), DocumentIndex.getInstance().getDocs().get(minID).getLength());
+                                lexiconMap.get(p.getTerm()), docIndex.getDocs().get(minID).getLength());
+
                         positions.put(p.getTerm(), positions.get(p.getTerm()) + 1);
                     }
                 }

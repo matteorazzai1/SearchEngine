@@ -79,13 +79,10 @@ public class LexiconEntry {
     public void setDf(int df) {
         this.df = df;
     }
+
     public void setIdf(double df) {
         this.idf = Math.log10(DocumentIndex.getInstance().getCollectionSize()/df);
     }
-
-    /*public void setIDF(double idf){
-        this.idf = idf;
-    }*/
 
     public void setDocIdSize(int docIdSize) {
         this.docIdSize = docIdSize;

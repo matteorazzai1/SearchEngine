@@ -7,9 +7,11 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -17,8 +19,8 @@ import static it.unipi.mircv.Constants.*;
 import static it.unipi.mircv.Preprocesser.process;
 
 public class SPIMI {
-    public static void performIndexing(String path, boolean isCompressed, boolean isDebug) throws IOException {
-        BufferedReader br = createBuffer(path, isCompressed);
+    public static void performIndexing(boolean isCompressed) throws IOException {
+        BufferedReader br = createBuffer(PATH_TO_COLLECTION, isCompressed);
         String line;
         String[] docPIDTokens;
         String[] tokens;
@@ -27,10 +29,14 @@ public class SPIMI {
         boolean terminationFlag = false;
         int docLenAccumulator = 0;
 
-        while (!terminationFlag) {
+        InvertedIndex invertedIndex = null;
+        DocumentIndex instance = null;
 
+
+        while (!terminationFlag) {
             InvertedIndex invertedIndex = InvertedIndex.getInstance();
             DocumentIndex docIndex = DocumentIndex.getInstance();
+
 
             while (Runtime.getRuntime().freeMemory() > Runtime.getRuntime().totalMemory() * 20 / 100) {
                 line = (br.readLine());
@@ -46,9 +52,7 @@ public class SPIMI {
                 tokens = docPIDTokens[1].split(" ");
                 docLenAccumulator += tokens.length;
 
-
                 for (String token : tokens) {
-
                     if (!invertedIndex.getPostingLists().containsKey(token)) {
                         invertedIndex.getPostingLists().put(token, new PostingList(new Posting(docID, 1)));
                     } else {
@@ -56,7 +60,7 @@ public class SPIMI {
                     }
                 }
                 Document toInsert = new Document(Integer.parseInt(docPIDTokens[0]), docID, tokens.length);
-                docIndex.addElement(toInsert);
+                instance.addElement(toInsert);
                 System.out.println(docID);
                 docID++;
             }
@@ -67,18 +71,41 @@ public class SPIMI {
                             Map.Entry::getValue,
                             (e1, e2) -> e1, LinkedHashMap::new)));
             System.out.println("flushing");
-            flushIndex(invertedIndex.getPostingLists(), isDebug, block_counter);
-            flushLexicon(invertedIndex.getPostingLists(), block_counter);
+            flushIndex(invertedIndex.getPostingLists(), block_counter);
+            //flushLexicon(invertedIndex.getPostingLists(), block_counter);
+            flushDocIndex(instance, block_counter);
             block_counter++;
             invertedIndex = null;
-            //docIndex = null;
-            System.gc();
 
+            DocumentIndex.resetInstance();
+            System.gc();
         }
         br.close();
         Constants.numIntermediateIndexes = block_counter;
-        DocumentIndex.getInstance().setAVDL((double) docLenAccumulator/docID-1);
-        DocumentIndex.getInstance().setCollectionSize(docID-1);
+        addFirstLineDocIndexData((((double) docLenAccumulator) / (docID - 1)) + ":" + (docID - 1));
+    }
+
+    private static void addFirstLineDocIndexData(String i) {
+        try {
+            Path path = Paths.get(PATH_TO_INTERMEDIATE_DOCINDEX + "1.txt");
+            List<String> existingLines = Files.readAllLines(path);
+            existingLines.add(0, i);
+            Files.write(path, existingLines);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void flushDocIndex(DocumentIndex docIndex, int block_counter) {
+        try{
+            FileWriter bf = new FileWriter(PATH_TO_INTERMEDIATE_DOCINDEX + block_counter + ".txt", StandardCharsets.UTF_8);
+            for (Document d : docIndex.getDocs()){
+                bf.write(d.toString() + "\n");
+            }
+            bf.close();
+        }catch (IOException e){
+            System.out.println("Error in flushing the doc index");
+        }
     }
 
     private static void flushLexicon(HashMap<String, PostingList> postings, int block_counter) throws IOException {
@@ -109,7 +136,7 @@ public class SPIMI {
         }
     }
 
-        private static void flushIndex(HashMap<String, PostingList> postings, boolean isDebug, int numIntermediateIndexes) throws IOException {
+        private static void flushIndex(HashMap<String, PostingList> postings, int numIntermediateIndexes) throws IOException {
 
         FileWriter bf = null;
         try {
@@ -131,8 +158,6 @@ public class SPIMI {
 
     }
 
-
-
     public static BufferedReader createBuffer(String path, boolean isCompressed) throws IOException {
         if (isCompressed) {
             TarArchiveInputStream tarInput = new TarArchiveInputStream
@@ -145,6 +170,7 @@ public class SPIMI {
     }
 
     public static void main(String[] args) throws IOException {
-        performIndexing(PATH_TO_COLLECTION, true, false);
+        //performIndexing(true);
+        DocumentIndex.readFromFile();
     }
 }

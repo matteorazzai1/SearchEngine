@@ -34,4 +34,9 @@ public class Document {
     public void setLength(int length) {
         this.length = length;
     }
+
+    @Override
+    public String toString(){
+        return (docNo + ":" + docID + ":" + length);
+    }
 }
