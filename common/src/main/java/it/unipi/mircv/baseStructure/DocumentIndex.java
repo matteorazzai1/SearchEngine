@@ -30,8 +30,8 @@ public class DocumentIndex {
 
     public static void resetInstance(){
         instance = null;
-    }
 
+    }
     public double getAVDL() {
         return AVDL;
     }

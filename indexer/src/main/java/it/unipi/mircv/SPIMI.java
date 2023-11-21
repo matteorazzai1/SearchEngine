@@ -32,9 +32,11 @@ public class SPIMI {
         InvertedIndex invertedIndex = null;
         DocumentIndex instance = null;
 
+
         while (!terminationFlag) {
-            invertedIndex = new InvertedIndex();
-            instance = DocumentIndex.getInstance();
+            InvertedIndex invertedIndex = InvertedIndex.getInstance();
+            DocumentIndex docIndex = DocumentIndex.getInstance();
+
 
             while (Runtime.getRuntime().freeMemory() > Runtime.getRuntime().totalMemory() * 20 / 100) {
                 line = (br.readLine());
@@ -74,6 +76,7 @@ public class SPIMI {
             flushDocIndex(instance, block_counter);
             block_counter++;
             invertedIndex = null;
+
             DocumentIndex.resetInstance();
             System.gc();
         }
