@@ -168,7 +168,6 @@ public class SPIMI {
     }
 
     public static void main(String[] args) throws IOException {
-        //performIndexing(true);
-        DocumentIndex.readFromFile();
+        performIndexing(true);
     }
 }
