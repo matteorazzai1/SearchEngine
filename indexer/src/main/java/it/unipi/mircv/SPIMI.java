@@ -29,13 +29,13 @@ public class SPIMI {
         boolean terminationFlag = false;
         int docLenAccumulator = 0;
 
-        InvertedIndex invertedIndex = null;
-        DocumentIndex instance = null;
+        InvertedIndex invertedIndex;
+        DocumentIndex docIndex;
 
 
         while (!terminationFlag) {
-            InvertedIndex invertedIndex = InvertedIndex.getInstance();
-            DocumentIndex docIndex = DocumentIndex.getInstance();
+            invertedIndex = InvertedIndex.getInstance();
+            docIndex = DocumentIndex.getInstance();
 
 
             while (Runtime.getRuntime().freeMemory() > Runtime.getRuntime().totalMemory() * 20 / 100) {
@@ -60,7 +60,7 @@ public class SPIMI {
                     }
                 }
                 Document toInsert = new Document(Integer.parseInt(docPIDTokens[0]), docID, tokens.length);
-                instance.addElement(toInsert);
+                docIndex.addElement(toInsert);
                 System.out.println(docID);
                 docID++;
             }
@@ -72,11 +72,9 @@ public class SPIMI {
                             (e1, e2) -> e1, LinkedHashMap::new)));
             System.out.println("flushing");
             flushIndex(invertedIndex.getPostingLists(), block_counter);
-            //flushLexicon(invertedIndex.getPostingLists(), block_counter);
-            flushDocIndex(instance, block_counter);
+            flushDocIndex(docIndex, block_counter);
             block_counter++;
-            invertedIndex = null;
-
+            invertedIndex.resetInstance();
             DocumentIndex.resetInstance();
             System.gc();
         }

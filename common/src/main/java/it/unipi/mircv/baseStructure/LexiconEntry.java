@@ -6,6 +6,11 @@ import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Map;
+
+import static it.unipi.mircv.Constants.b;
+import static it.unipi.mircv.Constants.k1;
 
 import static it.unipi.mircv.Constants.b;
 import static it.unipi.mircv.Constants.k1;
@@ -18,8 +23,8 @@ public class LexiconEntry {
 
         private int maxTf=0;   //max term freq inside a doc
         private double maxTfidf=0; //tfidf related to the maxTdf of the term
-
-        private double maxBM25=0; //bm25
+  
+        private double maxBM25=0; //maximum bm25 score of the term
         private long offsetIndexDocId=0;  //offset in the docId file of the inverted index
         private long offsetIndexFreq=0; //offset in the frequency file of the inverted index
 
@@ -116,10 +121,37 @@ public class LexiconEntry {
     public void setMaxTfidf(int maxTf) {
         this.maxTfidf = (1+Math.log10(maxTf))*this.getIdf();
     }
+
     public void setMaxTf(int maxTf) {
         this.maxTf=maxTf;
     }
+    
+    public long getDescriptorOffset() {
+        return descriptorOffset;
+    }
 
+    public void setDescriptorOffset(long descriptorOffset) {
+        this.descriptorOffset = descriptorOffset;
+    }
+
+    public int getNumBlocks() {
+        return numBlocks;
+    }
+
+    public void setNumBlocks(int numBlocks) {
+        this.numBlocks = numBlocks;
+    }
+
+    public double getMaxBM25() {
+        return maxBM25;
+    }
+
+    public void setMaxBM25(double maxBM25) {
+        this.maxBM25 = maxBM25;
+    }
+
+    
+    
 
     /**
      * This function writes the lexiconEntry in the lexiconFile
@@ -212,37 +244,17 @@ public class LexiconEntry {
                 docIdSize + ":" + freqSize + ":"+descriptorOffset+":"+ numBlocks+ "\n";
     }
 
-    public long getDescriptorOffset() {
-        return descriptorOffset;
-    }
-
-    public void setDescriptorOffset(long descriptorOffset) {
-        this.descriptorOffset = descriptorOffset;
-    }
-
-    public int getNumBlocks() {
-        return numBlocks;
-    }
-
-    public void setNumBlocks(int numBlocks) {
-        this.numBlocks = numBlocks;
-    }
-
-    public double getMaxBM25() {
-        return maxBM25;
-    }
-
-    public void setMaxBM25(double maxBM25) {
-        this.maxBM25 = maxBM25;
-    }
-
-    public void computeMaxBM25(PostingList postingList) {
-        double bm25;
+    public double computeMaxBM25(PostingList postingList) {
+        double bm25 = 0;
+        double avdl = DocumentIndex.getInstance().getAVDL();
+        ArrayList<Document> docs = DocumentIndex.getInstance().getDocs();
         for (Posting p : postingList.getPostings()) {
-            bm25 = ((p.getFrequency()) / (p.getFrequency() + k1 * (1 - b + b * (DocumentIndex.getInstance().getDocs().get(p.getDocId()).getLength() / DocumentIndex.getInstance().getAVDL())))*this.idf);
+            bm25 = ((p.getFrequency()) / (p.getFrequency() + k1 * (1 - b + b * (docs.get(p.getDocId()).getLength() / avdl)))*this.idf);
             if (bm25 > this.maxBM25) {
                 this.maxBM25 = bm25;
             }
         }
+        return bm25;
     }
+
 }
