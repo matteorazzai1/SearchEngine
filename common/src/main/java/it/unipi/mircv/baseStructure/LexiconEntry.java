@@ -12,6 +12,9 @@ import java.util.Map;
 import static it.unipi.mircv.Constants.b;
 import static it.unipi.mircv.Constants.k1;
 
+import static it.unipi.mircv.Constants.b;
+import static it.unipi.mircv.Constants.k1;
+
 public class LexiconEntry {
         private String term;
         private int df=0;  //document frequency of the term
@@ -20,6 +23,7 @@ public class LexiconEntry {
 
         private int maxTf=0;   //max term freq inside a doc
         private double maxTfidf=0; //tfidf related to the maxTdf of the term
+  
         private double maxBM25=0; //maximum bm25 score of the term
         private long offsetIndexDocId=0;  //offset in the docId file of the inverted index
         private long offsetIndexFreq=0; //offset in the frequency file of the inverted index
@@ -252,6 +256,5 @@ public class LexiconEntry {
         }
         return bm25;
     }
-
 
 }
