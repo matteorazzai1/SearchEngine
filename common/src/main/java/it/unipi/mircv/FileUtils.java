@@ -4,6 +4,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import static it.unipi.mircv.Constants.*;
 
@@ -50,5 +54,27 @@ public class FileUtils {
             fileSizeInBytes= Long.parseLong(null);
         }
         return fileSizeInBytes;
+    }
+
+    public static void appendFile(String pathSource,String pathDest){
+
+        Path sourcePath = Paths.get(pathSource);
+        Path destinationPath = Paths.get(pathDest);
+
+        try {
+
+            if (!Files.exists(destinationPath)) {
+                Files.createFile(destinationPath);
+                //System.out.println("Source file created: " + pathDest);
+            }
+
+
+            byte[] data = Files.readAllBytes(sourcePath);
+            Files.write(destinationPath, data, StandardOpenOption.APPEND);
+
+            //System.out.println("Content of " + pathSource + " appended to " + pathDest + " successfully!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -58,6 +58,9 @@ public class Merger
                FileUtils.clearDebugFiles();
         }
 
+        //merge the documentIndex intermediate files
+        mergeDocumentIndex();
+
         //Obtain all the paths of the intermediateIndex
         ArrayList<String> filePaths=new ArrayList<>();
 
@@ -140,6 +143,13 @@ public class Merger
 
         docIdChannel.close(); // Close the writer to save changes
         freqsChannel.close(); // Close the writer to save changes
+    }
+
+    private static void mergeDocumentIndex() {
+
+        for(int i=1; i<numIntermediateIndexes; i++){
+            FileUtils.appendFile(PATH_TO_INTERMEDIATE_DOCINDEX + i + ".txt", PATH_TO_FINAL_DOCINDEX + ".txt");
+        }
     }
 
 
