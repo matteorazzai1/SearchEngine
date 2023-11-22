@@ -7,6 +7,9 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 
+import static it.unipi.mircv.Constants.b;
+import static it.unipi.mircv.Constants.k1;
+
 public class LexiconEntry {
         private String term;
         private int df=0;  //document frequency of the term
@@ -15,6 +18,8 @@ public class LexiconEntry {
 
         private int maxTf=0;   //max term freq inside a doc
         private double maxTfidf=0; //tfidf related to the maxTdf of the term
+
+        private double maxBM25=0; //bm25
         private long offsetIndexDocId=0;  //offset in the docId file of the inverted index
         private long offsetIndexFreq=0; //offset in the frequency file of the inverted index
 
@@ -24,7 +29,7 @@ public class LexiconEntry {
         private long descriptorOffset=0; //starting position of the blockDescriptor into the file
         private int numBlocks=1; //number of blocks to split the list into
 
-        public static final long ENTRY_SIZE_LEXICON = 64+(4+8+4+4+8+8+8+4+4+8+4); //64 byte for the term, 4 for int values and 8 for double and long
+        public static final long ENTRY_SIZE_LEXICON = 64+(4+8+4+4+8+8+8+8+4+4+8+4); //64 byte for the term, 4 for int values and 8 for double and long
 
 
 
@@ -140,6 +145,7 @@ public class LexiconEntry {
         buffer.putInt(df);
         buffer.putInt(termCollFreq);
         buffer.putDouble(maxTfidf);
+        buffer.putDouble(maxBM25);
         buffer.putDouble(idf);
         buffer.putInt(maxTf);
 
@@ -184,6 +190,7 @@ public class LexiconEntry {
         lexEntry.df = buffer.getInt();
         lexEntry.termCollFreq = buffer.getInt();
         lexEntry.maxTfidf = buffer.getDouble();
+        lexEntry.maxBM25 = buffer.getDouble();
         lexEntry.idf = buffer.getDouble();
         lexEntry.maxTf = buffer.getInt();
 
@@ -219,5 +226,23 @@ public class LexiconEntry {
 
     public void setNumBlocks(int numBlocks) {
         this.numBlocks = numBlocks;
+    }
+
+    public double getMaxBM25() {
+        return maxBM25;
+    }
+
+    public void setMaxBM25(double maxBM25) {
+        this.maxBM25 = maxBM25;
+    }
+
+    public void computeMaxBM25(PostingList postingList) {
+        double bm25;
+        for (Posting p : postingList.getPostings()) {
+            bm25 = ((p.getFrequency()) / (p.getFrequency() + k1 * (1 - b + b * (DocumentIndex.getInstance().getDocs().get(p.getDocId()).getLength() / DocumentIndex.getInstance().getAVDL())))*this.idf);
+            if (bm25 > this.maxBM25) {
+                this.maxBM25 = bm25;
+            }
+        }
     }
 }

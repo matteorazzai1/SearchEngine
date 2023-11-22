@@ -269,6 +269,7 @@ public class Merger
                 lexEntry.setOffsetIndexFreq(offsetFreq-freqSize);
                 lexEntry.setDocIdSize(docIdSize);
                 lexEntry.setFreqSize(freqSize);
+                lexEntry.computeMaxBM25(finalPostingList); //compute the maxBM25
             }
 
 
