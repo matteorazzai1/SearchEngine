@@ -63,16 +63,24 @@ public class FileUtils {
 
         try {
 
-            if (!Files.exists(destinationPath)) {
-                Files.createFile(destinationPath);
-                //System.out.println("Source file created: " + pathDest);
-            }
-
-
             byte[] data = Files.readAllBytes(sourcePath);
             Files.write(destinationPath, data, StandardOpenOption.APPEND);
 
             //System.out.println("Content of " + pathSource + " appended to " + pathDest + " successfully!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void clearFile(String path){
+        try {
+            File file = new File(path);
+            FileWriter fileWriter = new FileWriter(file,false);
+            BufferedWriter writer = new BufferedWriter(fileWriter);
+
+
+            writer.close(); // Close the writer to save changes
+
         } catch (IOException e) {
             e.printStackTrace();
         }
