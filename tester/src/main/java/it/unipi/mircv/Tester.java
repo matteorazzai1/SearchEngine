@@ -22,12 +22,13 @@ public class Tester {
 
         LinkedList<LexiconEntry> entries=new LinkedList<>();
         LinkedList<PostingList> index = new LinkedList<>();
+        DocumentIndex.readFromFile();
         //TODO operazioni di setup
         while(true){
             System.out.println("Select one of the following options: \n 1: Conjunctive query\n 2: Disjunctive query\n 3: exit");
             Scanner sc = new Scanner(System.in);
             query_choice=sc.nextLine();
-            if(Objects.equals(query_choice, "0"))
+            if(Objects.equals(query_choice, "3"))
                 break;
             else if(Objects.equals(query_choice, "1"))
                 System.out.println("Test of conjunctive queries");
@@ -67,6 +68,8 @@ public class Tester {
 
 
             while(query!=null){
+                index.clear();
+                entries.clear();
                 query=process(query);
                 query_split=query.split("\t");
                 query=query_split[1];

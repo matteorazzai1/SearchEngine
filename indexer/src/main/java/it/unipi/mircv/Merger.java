@@ -1,9 +1,6 @@
 package it.unipi.mircv;
 
-import it.unipi.mircv.baseStructure.LexiconEntry;
-import it.unipi.mircv.baseStructure.Posting;
-import it.unipi.mircv.baseStructure.PostingList;
-import it.unipi.mircv.baseStructure.SkippingBlock;
+import it.unipi.mircv.baseStructure.*;
 import it.unipi.mircv.compression.UnaryCompressor;
 import it.unipi.mircv.compression.VariableByteCompressor;
 
@@ -61,12 +58,14 @@ public class Merger
         //merge the documentIndex intermediate files
         mergeDocumentIndex();
 
+        DocumentIndex doc=DocumentIndex.getInstance();
+        doc.readFromFile();
+
         //Obtain all the paths of the intermediateIndex
         ArrayList<String> filePaths=new ArrayList<>();
 
         
         for(int i = 1; i< numIntermediateIndexes; i++){
-            System.out.println("Arrivo qui");
             filePaths.add(PATH_TO_INTERMEDIATE_INDEX+i+".txt");
         }
 
@@ -149,6 +148,8 @@ public class Merger
     }
 
     private static void mergeDocumentIndex() {
+
+        FileUtils.clearFile(PATH_TO_FINAL_DOCINDEX+".txt"); //make empty the file of the final docIndex or create it if it does not exist
 
         for(int i=1; i<numIntermediateIndexes; i++){
             FileUtils.appendFile(PATH_TO_INTERMEDIATE_DOCINDEX + i + ".txt", PATH_TO_FINAL_DOCINDEX + ".txt");

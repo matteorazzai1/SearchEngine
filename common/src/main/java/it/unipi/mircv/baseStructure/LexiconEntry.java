@@ -7,10 +7,6 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Map;
-
-import static it.unipi.mircv.Constants.b;
-import static it.unipi.mircv.Constants.k1;
 
 import static it.unipi.mircv.Constants.b;
 import static it.unipi.mircv.Constants.k1;
@@ -246,17 +242,20 @@ public class LexiconEntry {
                 docIdSize + ":" + freqSize + ":"+descriptorOffset+":"+ numBlocks+ "\n";
     }
 
-    public double computeMaxBM25(PostingList postingList) {
+    /**
+     * This function computes the maxBM25 of the term and set the value of the maxBM25 parameter of the LexiconEntry
+     * @param postingList the postingList of the term
+     */
+    public void computeMaxBM25(PostingList postingList) {
         double bm25 = 0;
         double avdl = DocumentIndex.getInstance().getAVDL();
         ArrayList<Document> docs = DocumentIndex.getInstance().getDocs();
         for (Posting p : postingList.getPostings()) {
-            bm25 = ((p.getFrequency()) / (p.getFrequency() + k1 * (1 - b + b * (docs.get(p.getDocId()).getLength() / avdl)))*this.idf);
+            bm25 = ((p.getFrequency()) / (p.getFrequency() + k1 * (1 - b + b * (docs.get(p.getDocId()-1).getLength() / avdl)))*this.idf);
             if (bm25 > this.maxBM25) {
                 this.maxBM25 = bm25;
             }
         }
-        return bm25;
     }
 
 }
