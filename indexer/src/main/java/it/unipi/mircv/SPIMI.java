@@ -106,33 +106,6 @@ public class SPIMI {
         }
     }
 
-    private static void flushLexicon(HashMap<String, PostingList> postings, int block_counter) throws IOException {
-        FileWriter bf = null;
-        try{
-            bf = new FileWriter(PATH_TO_INTERMEDIATE_LEXICON + block_counter + ".txt", StandardCharsets.UTF_8);
-            int df;
-            int maxTF;
-            StringBuilder s;
-            for (Map.Entry<String, PostingList> entry : postings.entrySet()){
-                s = new StringBuilder();
-                maxTF = 0;
-                PostingList p = entry.getValue();
-                df = p.getPostings().size();
-                for (Posting posting : p.getPostings()){
-                    if(posting.getFrequency() > maxTF){
-                        maxTF = posting.getFrequency();
-                    }
-                }
-                s.append(entry.getKey()).append("\t").append(maxTF).append(":").append(df);
-                bf.write(s + "\n");
-
-            }
-        } catch (IOException e){
-            System.out.println("Error in flushing the lexicon");
-        }finally {
-            bf.close();
-        }
-    }
 
         private static void flushIndex(HashMap<String, PostingList> postings, int numIntermediateIndexes) throws IOException {
 
@@ -168,7 +141,6 @@ public class SPIMI {
     }
 
     public static void main(String[] args) throws IOException {
-        //performIndexing(true);
-        DocumentIndex.readFromFile();
+        performIndexing(true);
     }
 }

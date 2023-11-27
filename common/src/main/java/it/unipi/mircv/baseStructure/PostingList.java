@@ -148,4 +148,8 @@ public class PostingList {
         }
         return postingTermQuery;
     }
+
+    public int getPostingsLength() {
+        return this.getPostings().size();
+    }
 }

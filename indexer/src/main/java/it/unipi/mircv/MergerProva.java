@@ -282,7 +282,7 @@ public class MergerProva
                     //create skipping block
 
                     SkippingBlock skippingBlock=new SkippingBlock(docIdsBlock.get(docIdsBlock.size()-1),offsetDocId,compressedDocId.length,offsetFreq,compressedFreq.length,docIdsBlock.size());
-                    positionBlock=skippingBlock.writeSkippingBlock(positionBlock,blockChannel);
+                    positionBlock=skippingBlock.writeSkippingBlock(positionBlock, blockChannel);
                     skippingBlock.writeDebugSkippingBlock(finalPostingList.getTerm());
 
                     offsetDocId += compressedDocId.length;

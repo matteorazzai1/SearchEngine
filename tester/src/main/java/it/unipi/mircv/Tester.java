@@ -90,11 +90,11 @@ public class Tester {
                     if(disjunctive_type.equals("1")){//DAAT
                         if(ranking_type.equals("1")){//TFIDF
                             query_start=System.currentTimeMillis();
-                            DAAT(index, entries , query,false);
+                            DAAT(index, entries , query,false, true);
                             //TODO execute disjunctive with DAAT and TFIDF
                         }else{//BM25
                             query_start=System.currentTimeMillis();
-                            DAAT(index, entries , query,true);
+                            DAAT(index, entries , query,true, true);
                             //TODO execute conjunctive with DAAT and BM25
                         }
                     }else{//MaxScore

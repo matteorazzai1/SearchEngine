@@ -55,7 +55,7 @@ public class DocumentIndex {
     }
 
 
-    public static DocumentIndex readFromFile() throws IOException {
+    public void readFromFile() throws IOException {
         DocumentIndex docIndex = null;
         try {
             BufferedReader fr = Files.newBufferedReader(Paths.get(PATH_TO_FINAL_DOCINDEX + ".txt"), StandardCharsets.UTF_8);
@@ -74,6 +74,6 @@ public class DocumentIndex {
         } catch (IOException e) {
             System.out.println("Cannot read the DocIndex");
         }
-        return docIndex;
+        instance = docIndex;
     }
 }

@@ -63,8 +63,11 @@ public class Merger
 
         
         for(int i = 1; i< numIntermediateIndexes; i++){
-            filePaths.add("indexer/data/pathToOutput"+i+".txt");
+            System.out.println("Arrivo qui");
+            filePaths.add(PATH_TO_INTERMEDIATE_INDEX+i+".txt");
         }
+
+
 
 
         //open file channels
@@ -241,7 +244,7 @@ public class Merger
                 //create skipping block
 
                 SkippingBlock skippingBlock=new SkippingBlock(docIdsBlock.get(docIdsBlock.size()-1),offsetDocId,compressedDocId.length,offsetFreq,compressedFreq.length,docIdsBlock.size());
-                positionBlock=skippingBlock.writeSkippingBlock(positionBlock,blockChannel);
+                positionBlock=skippingBlock.writeSkippingBlock(positionBlock, blockChannel);
                 if(isDebugging)
                     skippingBlock.writeDebugSkippingBlock(finalPostingList.getTerm());
 
