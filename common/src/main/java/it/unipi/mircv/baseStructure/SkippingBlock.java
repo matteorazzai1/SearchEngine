@@ -102,20 +102,20 @@ public class SkippingBlock {
         this.numPostings = numPostings;
     }
 
-    public int getEntrySize(){
+    public static int getEntrySize(){
         return BLOCK_ENTRY_SIZE;
     }
 
     /**
      * write a single blockDescriptor on file
      * @param positionBlock
-     * @param channelBlock
      * @return
      * @throws IOException
      */
-    public long writeSkippingBlock(long positionBlock, FileChannel channelBlock) throws IOException {
+    public long writeSkippingBlock(long positionBlock, FileChannel blocks) throws IOException {
 
-        MappedByteBuffer buffer=channelBlock.map(FileChannel.MapMode.READ_WRITE,positionBlock, BLOCK_ENTRY_SIZE);
+
+        MappedByteBuffer buffer=blocks.map(FileChannel.MapMode.READ_WRITE,positionBlock, BLOCK_ENTRY_SIZE);
 
 
         buffer.putInt(maxDocId);
@@ -134,20 +134,26 @@ public class SkippingBlock {
     /**
      * read single block from file
      * @param positionBlock position of the block inside the file
-     * @param channelBlock channel related to the blockFile
      * @throws IOException
      */
-    public void readSkippingBlocks(long positionBlock,FileChannel channelBlock) throws IOException {
+    public static SkippingBlock readSkippingBlocks(long positionBlock) throws IOException {
 
-        MappedByteBuffer buffer=channelBlock.map(FileChannel.MapMode.READ_WRITE,positionBlock, BLOCK_ENTRY_SIZE);
+        SkippingBlock b = new SkippingBlock();
+        FileChannel blocks=(FileChannel) Files.newByteChannel(Paths.get(LEXICON_PATH),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
+        MappedByteBuffer buffer=blocks.map(FileChannel.MapMode.READ_WRITE,positionBlock, BLOCK_ENTRY_SIZE);
 
-        this.setMaxDocId(buffer.getInt());
-        this.setOffsetDocId(buffer.getLong());
-        this.setDocIdSize(buffer.getInt());
-        this.setOffsetFreq(buffer.getLong());
-        this.setFreqSize(buffer.getInt());
-        this.setNumPostings(buffer.getInt());
+        b.setMaxDocId(buffer.getInt());
+        b.setOffsetDocId(buffer.getLong());
+        b.setDocIdSize(buffer.getInt());
+        b.setOffsetFreq(buffer.getLong());
+        b.setFreqSize(buffer.getInt());
+        b.setNumPostings(buffer.getInt());
 
+        blocks.close();
+        return b;
     }
 
     /**
@@ -189,6 +195,9 @@ public class SkippingBlock {
                 Posting posting=new Posting(decompressedArrayDocId[i],decompressedArrayFreq[i]);
                 blockPostingList.add(posting);
         }
+
+        docIdChannel.close();
+        freqChannel.close();
         return blockPostingList;
     }
 

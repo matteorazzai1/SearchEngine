@@ -70,6 +70,8 @@ public class Merger
         }
 
 
+
+
         //open file channels
 
         docIdChannel=(FileChannel) Files.newByteChannel(Paths.get(INV_INDEX_DOCID),
@@ -253,7 +255,7 @@ public class Merger
                 //create skipping block
 
                 SkippingBlock skippingBlock=new SkippingBlock(docIdsBlock.get(docIdsBlock.size()-1),offsetDocId,compressedDocId.length,offsetFreq,compressedFreq.length,docIdsBlock.size());
-                positionBlock=skippingBlock.writeSkippingBlock(positionBlock,blockChannel);
+                positionBlock=skippingBlock.writeSkippingBlock(positionBlock, blockChannel);
                 if(isDebugging)
                     skippingBlock.writeDebugSkippingBlock(finalPostingList.getTerm());
 
