@@ -44,6 +44,9 @@ public class Preprocesser {
         for (String element : punctuation) {
             text = text.replace(element, " ");
         }
+        while(text.startsWith(" ")){
+            text = text.substring(1);
+        }
         String[] termArray = text.split("\\s+");
         List<String> termList = new ArrayList<>();
         for (String term : termArray) {
