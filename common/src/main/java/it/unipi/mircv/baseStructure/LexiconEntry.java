@@ -207,7 +207,7 @@ public class LexiconEntry {
 
         LexiconEntry lexEntry=new LexiconEntry(new String(buffer.array(), StandardCharsets.UTF_8).trim());
 
-        buffer = ByteBuffer.allocate((int) ENTRY_SIZE_LEXICON);
+        buffer = ByteBuffer.allocate((int) ENTRY_SIZE_LEXICON-64);
 
         while (buffer.hasRemaining()) {
             lexiconFC.read(buffer);

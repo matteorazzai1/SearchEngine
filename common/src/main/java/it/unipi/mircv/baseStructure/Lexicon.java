@@ -71,8 +71,17 @@ public class Lexicon {
         LexiconEntry lexEntry;
 
 
-
-
+        //check if the term is the first or the last of the lexicon, so we avoid performing the cycle
+        LexiconEntry firstLexEntry=LexiconEntry.readLexEntryFromDisk(startInterval, lexiconFC);
+        LexiconEntry lastLexEntry=LexiconEntry.readLexEntryFromDisk(endInterval-ENTRY_SIZE_LEXICON, lexiconFC);
+        if(firstLexEntry.getTerm().compareTo(term)==0){
+            lexiconFC.close();
+            return firstLexEntry;
+        }
+        else if (lastLexEntry.getTerm().compareTo(term)==0){
+            lexiconFC.close();
+            return lastLexEntry;
+        }
 
 
         while(startInterval<=endInterval) {
