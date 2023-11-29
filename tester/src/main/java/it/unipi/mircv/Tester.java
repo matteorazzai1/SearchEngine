@@ -11,7 +11,7 @@ import java.util.*;
 import static it.unipi.mircv.SPIMI.createBuffer;
 import static it.unipi.mircv.Preprocesser.process;
 import static it.unipi.mircv.Constants.PATH_TO_QUERIES;
-import static it.unipi.mircv.Ranking.DAAT;
+import static it.unipi.mircv.Ranking.DAATDisjunctive;
 public class Tester {
 
     public static void main(String[] args) throws IOException {
@@ -22,7 +22,7 @@ public class Tester {
 
         LinkedList<LexiconEntry> entries=new LinkedList<>();
         LinkedList<PostingList> index = new LinkedList<>();
-        DocumentIndex.readFromFile();
+        DocumentIndex.getInstance().readFromFile();
         //TODO operazioni di setup
         while(true){
             System.out.println("Select one of the following options: \n 1: Conjunctive query\n 2: Disjunctive query\n 3: exit");
@@ -34,13 +34,13 @@ public class Tester {
                 System.out.println("Test of conjunctive queries");
             else if(Objects.equals(query_choice, "2")) {
                 System.out.println("Test of disjunctive queries");
-                System.out.println("Select one of these options: \n1) execute DAAT \n2) execute MaxScore");
+                System.out.println("Select one of these options: \n1) execute DAATDisjunctive \n2) execute MaxScore");
                 do {
                     sc = new Scanner(System.in);
                     disjunctive_type = sc.nextLine();
                 }while (!disjunctive_type.equals("1") && !disjunctive_type.equals("2"));
                 if(disjunctive_type.equals("1"))
-                    System.out.println("You selected DAAT");
+                    System.out.println("You selected DAATDisjunctive");
                 else
                     System.out.println("You selected MaxScore");
             }
@@ -90,15 +90,15 @@ public class Tester {
                         //TODO execute conjunctive with BM25
                     }
                 }else{//Disjunctive
-                    if(disjunctive_type.equals("1")){//DAAT
+                    if(disjunctive_type.equals("1")){//DAATDisjunctive
                         if(ranking_type.equals("1")){//TFIDF
                             query_start=System.currentTimeMillis();
-                            DAAT(index, entries , query,false, true);
-                            //TODO execute disjunctive with DAAT and TFIDF
+                            DAATDisjunctive(index, entries , query,false, true);
+                            //TODO execute disjunctive with DAATDisjunctive and TFIDF
                         }else{//BM25
                             query_start=System.currentTimeMillis();
-                            DAAT(index, entries , query,true, true);
-                            //TODO execute conjunctive with DAAT and BM25
+                            DAATDisjunctive(index, entries , query,true, true);
+                            //TODO execute conjunctive with DAATDisjunctive and BM25
                         }
                     }else{//MaxScore
                         if(ranking_type.equals("1")){//TFIDF
