@@ -70,6 +70,7 @@ public class Ranking {
                 .collect(Collectors.toMap(LexiconEntry::getTerm,  LexiconEntry -> new AbstractMap.SimpleEntry<>(0, 1))); //couple which indicates position in the block and numBlock
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
+        docIndex.loadCollectionStats();
         docIndex.readFromFile();
         lexiconEntries.sort(Comparator.comparing(LexiconEntry::getDf));
         LinkedList<PostingList> index = new LinkedList<>();

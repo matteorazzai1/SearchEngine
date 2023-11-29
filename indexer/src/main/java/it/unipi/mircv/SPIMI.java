@@ -1,15 +1,20 @@
 package it.unipi.mircv;
 
 import it.unipi.mircv.baseStructure.*;
+import it.unipi.mircv.compression.VariableByteCompressor;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
 import static it.unipi.mircv.Constants.*;
@@ -17,6 +22,16 @@ import static it.unipi.mircv.Preprocesser.process;
 
 public class SPIMI {
     public static void performIndexing(boolean isCompressed) throws IOException {
+
+        //create fileChannel for the final index
+
+        FileUtils.clearFile(PATH_TO_FINAL_DOCINDEX+".txt"); //make empty the file of the final docIndex or create it if it does not exist
+
+        FileChannel docIndexChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCINDEX + ".txt"),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
+
         BufferedReader br = createBuffer(PATH_TO_COLLECTION, isCompressed);
         String line;
         String[] docPIDTokens;
@@ -67,34 +82,27 @@ public class SPIMI {
                             (e1, e2) -> e1, LinkedHashMap::new)));
             System.out.println("flushing");
             flushIndex(invertedIndex.getPostingLists(), block_counter);
-            flushDocIndex(docsLen, block_counter);
+            flushDocIndex(docsLen, docIndexChannel);
             block_counter++;
             InvertedIndex.resetInstance();
             docsLen.clear();
             System.gc();
         }
         br.close();
-        addFirstLineDocIndexData((((double) docLenAccumulator) / (docID - 1)) + ":" + (docID - 1));
+        docIndexChannel.close();
+        DocumentIndex.getInstance().saveCollectionStats((((double) docLenAccumulator) / (docID - 1)), (docID - 1));
     }
 
-    private static void addFirstLineDocIndexData(String i) {
-        try {
-            Path path = Paths.get(PATH_TO_INTERMEDIATE_DOCINDEX + "1.txt");
-            List<String> existingLines = Files.readAllLines(path);
-            existingLines.add(0, i);
-            Files.write(path, existingLines);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
-    private static void flushDocIndex(ArrayList<Integer> docsLen, int block_counter) {
+
+    private static void flushDocIndex(ArrayList<Integer> docsLen, FileChannel docIndexIntermediate) {
+
         try{
-            FileWriter bf = new FileWriter(PATH_TO_INTERMEDIATE_DOCINDEX + block_counter + ".txt", StandardCharsets.UTF_8);
-            for (Integer i : docsLen){
-                bf.write(i + "\n");
-            }
-            bf.close();
+
+            docIndexIntermediate.write(ByteBuffer.wrap(VariableByteCompressor.compressArrayInt(docsLen.stream()
+                        .mapToInt(Integer::intValue)
+                        .toArray())));
+
         }catch (IOException e){
             System.out.println("Error in flushing the doc index");
         }
