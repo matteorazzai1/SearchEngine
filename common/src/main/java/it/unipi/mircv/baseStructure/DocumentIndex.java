@@ -1,11 +1,19 @@
 package it.unipi.mircv.baseStructure;
 
+import it.unipi.mircv.FileUtils;
+import it.unipi.mircv.compression.VariableByteCompressor;
+
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.prefs.Preferences;
 
+import static it.unipi.mircv.Constants.LEXICON_PATH;
 import static it.unipi.mircv.Constants.PATH_TO_FINAL_DOCINDEX;
 
 public class DocumentIndex {
@@ -50,25 +58,36 @@ public class DocumentIndex {
 
 
     public void readFromFile() throws IOException {
-        DocumentIndex docIndex = null;
+
+        instance.docsLen = new int[instance.getCollectionSize()];
+
+        FileChannel docIndexChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCINDEX + ".txt"),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
         try {
-            BufferedReader fr = Files.newBufferedReader(Paths.get(PATH_TO_FINAL_DOCINDEX + ".txt"), StandardCharsets.UTF_8);
-            docIndex = DocumentIndex.getInstance();
-            String firstLine = String.valueOf(fr.readLine());
-            String[] firstLineSplit = firstLine.split(":");
-            docIndex.setAVDL(Double.parseDouble(firstLineSplit[0]));
-            docIndex.setCollectionSize(Integer.parseInt(firstLineSplit[1]));
-            docIndex.docsLen = new int[docIndex.getCollectionSize()];
-            String line = fr.readLine();
-            int i = 0;
-            while (line != null) {
-                docIndex.docsLen[i] = Integer.parseInt(line);
-                line = fr.readLine();
-            }
-            fr.close();
+            MappedByteBuffer buffer=docIndexChannel.map(FileChannel.MapMode.READ_WRITE,0, FileUtils.retrieveFileSize(PATH_TO_FINAL_DOCINDEX+ ".txt"));
+
+            byte[] bytes = new byte[buffer.remaining()];
+            buffer.get(bytes);
+
+            instance.docsLen = VariableByteCompressor.decompressArray(bytes, instance.collectionSize);
+            docIndexChannel.close();
         } catch (IOException e) {
             System.out.println("Cannot read the DocIndex");
         }
-        instance = docIndex;
+
+    }
+
+    public void saveCollectionStats(Double AVDL, int collectionSize) {
+        Preferences prefs = Preferences.userNodeForPackage(DocumentIndex.class);
+        prefs.put("AVDL", String.valueOf(AVDL));
+        prefs.put("collectionSize", String.valueOf(collectionSize));
+    }
+
+    public void loadCollectionStats() {
+        Preferences prefs = Preferences.userNodeForPackage(DocumentIndex.class);
+        this.setAVDL(Double.parseDouble(prefs.get("AVDL", "")));
+        this.setCollectionSize(Integer.parseInt(prefs.get("collectionSize", "")));
     }
 }
