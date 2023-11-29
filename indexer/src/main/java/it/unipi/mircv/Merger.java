@@ -36,7 +36,9 @@ public class Merger
 
     private static FileChannel blockChannel=null;
 
-    static boolean isDebugging = false;
+    static boolean isDebugging = true;
+
+    private static final int numIntermediateIndexes = new File(PATH_TO_INTERMEDIATE_INDEX_FOLDER).list().length;
 
     /**
      * It accesses to all the file related to intermediateInvertedIndex at the same time
@@ -65,7 +67,7 @@ public class Merger
         ArrayList<String> filePaths=new ArrayList<>();
 
         
-        for(int i = 1; i< numIntermediateIndexes; i++){
+        for(int i = 1; i <= numIntermediateIndexes; i++){
             filePaths.add(PATH_TO_INTERMEDIATE_INDEX+i+".txt");
         }
 
@@ -215,7 +217,13 @@ public class Merger
             }
 
             int block_size = (int) Math.ceil(Math.sqrt(finalPostingList.getPostings().size()));
-            int num_blocks = (int) Math.ceil((double)finalPostingList.getPostings().size()/block_size);
+            int num_blocks;
+            if(finalPostingList.getPostings().size() <= 256){
+                num_blocks = 1;
+            }
+            else{
+                num_blocks = (int) Math.ceil((double)finalPostingList.getPostings().size()/block_size);
+            }
 
             int docIdSize=0;
             int freqSize=0;
@@ -255,6 +263,7 @@ public class Merger
                 //create skipping block
 
                 SkippingBlock skippingBlock=new SkippingBlock(docIdsBlock.get(docIdsBlock.size()-1),offsetDocId,compressedDocId.length,offsetFreq,compressedFreq.length,docIdsBlock.size());
+
                 positionBlock=skippingBlock.writeSkippingBlock(positionBlock, blockChannel);
                 if(isDebugging)
                     skippingBlock.writeDebugSkippingBlock(finalPostingList.getTerm());
@@ -288,26 +297,6 @@ public class Merger
             //System.out.println("Data has been written to " + path);
 
     }
-
-    /**
-     * This function takes all the lexiconEntry related to the finalIndex and wrote that on the lexicon file
-     * @param lex  lexiconEntry of that term
-     * @throws IOException
-     */
-    private static void writeLexicon(LexiconEntry lex) throws IOException {
-
-
-        FileChannel lexicon=(FileChannel) Files.newByteChannel(Paths.get(LEXICON_PATH),
-                StandardOpenOption.WRITE,
-                StandardOpenOption.READ,
-                StandardOpenOption.CREATE);
-
-
-        positionTerm=lex.writeLexiconEntry(positionTerm,lexicon);
-
-
-    }
-
 
     private static void saveMergedIndexDebugging(PostingList finalIndex, LexiconEntry finalLexicon) {
 

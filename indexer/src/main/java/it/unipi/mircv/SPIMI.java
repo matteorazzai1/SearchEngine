@@ -9,10 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static it.unipi.mircv.Constants.*;
@@ -30,12 +27,11 @@ public class SPIMI {
         int docLenAccumulator = 0;
 
         InvertedIndex invertedIndex;
-        DocumentIndex docIndex;
+        ArrayList<Integer> docsLen = new ArrayList<>();
 
 
         while (!terminationFlag) {
             invertedIndex = InvertedIndex.getInstance();
-            docIndex = DocumentIndex.getInstance();
 
 
             while (Runtime.getRuntime().freeMemory() > Runtime.getRuntime().totalMemory() * 20 / 100) {
@@ -59,8 +55,7 @@ public class SPIMI {
                         invertedIndex.getPostingLists().get(token).updatePosting(docID);
                     }
                 }
-                Document toInsert = new Document(Integer.parseInt(docPIDTokens[0]), docID, tokens.length);
-                docIndex.addElement(toInsert);
+                docsLen.add(tokens.length);
                 System.out.println(docID);
                 docID++;
             }
@@ -72,14 +67,13 @@ public class SPIMI {
                             (e1, e2) -> e1, LinkedHashMap::new)));
             System.out.println("flushing");
             flushIndex(invertedIndex.getPostingLists(), block_counter);
-            flushDocIndex(docIndex, block_counter);
+            flushDocIndex(docsLen, block_counter);
             block_counter++;
-            invertedIndex.resetInstance();
-            DocumentIndex.resetInstance();
+            InvertedIndex.resetInstance();
+            docsLen.clear();
             System.gc();
         }
         br.close();
-        Constants.numIntermediateIndexes = block_counter;
         addFirstLineDocIndexData((((double) docLenAccumulator) / (docID - 1)) + ":" + (docID - 1));
     }
 
@@ -94,11 +88,11 @@ public class SPIMI {
         }
     }
 
-    private static void flushDocIndex(DocumentIndex docIndex, int block_counter) {
+    private static void flushDocIndex(ArrayList<Integer> docsLen, int block_counter) {
         try{
             FileWriter bf = new FileWriter(PATH_TO_INTERMEDIATE_DOCINDEX + block_counter + ".txt", StandardCharsets.UTF_8);
-            for (Document d : docIndex.getDocs()){
-                bf.write(d.toString() + "\n");
+            for (Integer i : docsLen){
+                bf.write(i + "\n");
             }
             bf.close();
         }catch (IOException e){

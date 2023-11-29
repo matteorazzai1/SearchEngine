@@ -119,7 +119,6 @@ public class SkippingBlock {
 
 
         buffer.putInt(maxDocId);
-
         buffer.putLong(offsetDocId);
         buffer.putInt(docIdSize);
         buffer.putLong(offsetFreq);
@@ -136,14 +135,10 @@ public class SkippingBlock {
      * @param positionBlock position of the block inside the file
      * @throws IOException
      */
-    public static SkippingBlock readSkippingBlocks(long positionBlock) throws IOException {
+    public static SkippingBlock readSkippingBlocks(long positionBlock, FileChannel blocks) throws IOException {
 
         SkippingBlock b = new SkippingBlock();
-        FileChannel blocks=(FileChannel) Files.newByteChannel(Paths.get(LEXICON_PATH),
-                StandardOpenOption.WRITE,
-                StandardOpenOption.READ,
-                StandardOpenOption.CREATE);
-        MappedByteBuffer buffer=blocks.map(FileChannel.MapMode.READ_WRITE,positionBlock, BLOCK_ENTRY_SIZE);
+        MappedByteBuffer buffer=blocks.map(FileChannel.MapMode.READ_WRITE, positionBlock, BLOCK_ENTRY_SIZE);
 
         b.setMaxDocId(buffer.getInt());
         b.setOffsetDocId(buffer.getLong());
@@ -152,7 +147,8 @@ public class SkippingBlock {
         b.setFreqSize(buffer.getInt());
         b.setNumPostings(buffer.getInt());
 
-        blocks.close();
+        System.out.println(b);
+
         return b;
     }
 

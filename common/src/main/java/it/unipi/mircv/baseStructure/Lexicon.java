@@ -67,20 +67,25 @@ public class Lexicon {
 
 
         long startInterval=0;
-        long endInterval=lexiconSize;
+        long endInterval=lexiconSize, midSize, positionTerm;
+        LexiconEntry lexEntry;
+
+
+
+
 
 
         while(startInterval<=endInterval) {
 
-            long midSize = (startInterval+endInterval) / 2;
+            midSize = (startInterval+endInterval) / 2;
+            if (midSize == startInterval){
+                return null;
+            }
+
+            positionTerm = ((midSize / ENTRY_SIZE_LEXICON)) * ENTRY_SIZE_LEXICON; //it takes the quotient integer of the division, and it multiplies fo ENTRY_SIZE_LEXICON to find the starting point of the position of the term
 
 
-            long positionTerm = ((midSize / ENTRY_SIZE_LEXICON)) * ENTRY_SIZE_LEXICON; //it takes the quotient integer of the division, and it multiplies fo ENTRY_SIZE_LEXICON to find the starting point of the position of the term
-
-
-            LexiconEntry lexEntry = LexiconEntry.readLexEntryFromDisk(positionTerm, lexiconFC);
-
-
+            lexEntry = LexiconEntry.readLexEntryFromDisk(positionTerm, lexiconFC);
             int comparison = term.compareTo(lexEntry.getTerm());
 
             if (comparison < 0) {
@@ -92,9 +97,11 @@ public class Lexicon {
                 startInterval=midSize;
             } else {
                 //the two terms are equal
+                lexiconFC.close();
                 return lexEntry;
             }
         }
+        lexiconFC.close();
         return null;
     }
 

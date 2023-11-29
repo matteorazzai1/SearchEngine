@@ -247,11 +247,13 @@ public class LexiconEntry {
      * @param postingList the postingList of the term
      */
     public void computeMaxBM25(PostingList postingList) {
-        double bm25 = 0;
+        double bm25;
         double avdl = DocumentIndex.getInstance().getAVDL();
-        ArrayList<Document> docs = DocumentIndex.getInstance().getDocs();
-        for (Posting p : postingList.getPostings()) {
-            bm25 = ((p.getFrequency()) / (p.getFrequency() + k1 * (1 - b + b * (docs.get(p.getDocId()-1).getLength() / avdl)))*this.idf);
+        int[] docs = DocumentIndex.getInstance().getDocsLen();
+        for (int i = 0; i < postingList.getPostingsLength(); i++) {
+            Posting p = postingList.getPostings().get(i);
+            //-1 on the docID since in position x of the array there is the length of the doc having docID x-1
+            bm25 = ((p.getFrequency()) / (p.getFrequency() + k1 * (1 - b + b * (docs[p.getDocId()-1] / avdl)))*this.idf);
             if (bm25 > this.maxBM25) {
                 this.maxBM25 = bm25;
             }
