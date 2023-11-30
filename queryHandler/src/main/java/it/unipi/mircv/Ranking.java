@@ -69,8 +69,6 @@ public class Ranking {
                 .collect(Collectors.toMap(key -> key, key -> new AbstractMap.SimpleEntry<>(0, 0))); //couple which indicates position in the block and numBlock
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
-        docIndex.loadCollectionStats();
-        docIndex.readFromFile();
         lexiconEntries.sort(Comparator.comparing(LexiconEntry::getDf));
         LinkedList<PostingList> index = new LinkedList<>();
 
@@ -91,7 +89,7 @@ public class Ranking {
         double scoreAccumulator;
         boolean computeScore = true;
         AbstractMap.SimpleEntry<Integer, Integer> positionBlockHolder;
-        PostingList p = null;
+        PostingList p;
 
         while(positions.get(shortestPosting.getTerm()).getValue() < lexiconEntries.get(0).getNumBlocks()){
             for(int j=1; j<index.size(); j++){
@@ -133,18 +131,19 @@ public class Ranking {
                             lexiconEntries.get(l).getIdf(), docIndex.getDocsLen()[nextDocId-1]);
                 }
 
-                if(finalScores.size() == k && finalScores.peek().getValue() < scoreAccumulator){
-                    finalScores.poll();
+                if(finalScores.size() < k ){
                     finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId-1, scoreAccumulator));
                 }
-                else{
+                else if(finalScores.peek().getValue() < scoreAccumulator){
+                    finalScores.poll();
                     finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId-1, scoreAccumulator));
+
                 }
             }
         }
 
         LinkedList<Map.Entry<Integer, Double>> output = new LinkedList<>(finalScores);
-        output.sort(Map.Entry.comparingByValue());
+        output.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
         blocks.close();
         return output;
     }
@@ -196,16 +195,21 @@ public class Ranking {
         LinkedList<LexiconEntry> entries = new LinkedList();
         String query = "ferrari lamborghini";
 
+        DocumentIndex docIndex = DocumentIndex.getInstance();
+        docIndex.loadCollectionStats();
+        docIndex.readFromFile();
+
+        long start = System.currentTimeMillis();
         LexiconEntry l1 = Lexicon.retrieveEntryFromDisk("ferrari");
         LexiconEntry l2 = Lexicon.retrieveEntryFromDisk("lamborghini");
 
         entries.add(l1);
         entries.add(l2);
 
-        long start = System.currentTimeMillis();
-        System.out.println(DAATConjunctive(entries, query, false, 5));
+
+        System.out.println(DAATConjunctive(entries, query, true, 5));
         long finish = System.currentTimeMillis();
         long timeElapsed = finish - start;
-        System.out.println(timeElapsed);
+        System.out.println("Time elapsed: " + timeElapsed);
     }
 }
