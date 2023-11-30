@@ -36,21 +36,17 @@ public class Merger
 
     private static FileChannel blockChannel=null;
 
-    static boolean isDebugging = true;
 
     private static final int numIntermediateIndexes = new File(PATH_TO_INTERMEDIATE_INDEX_FOLDER).list().length;
 
     /**
      * It accesses to all the file related to intermediateInvertedIndex at the same time
-     * @param args
+     * @param isDebugging flag to determine if we're debugging or not
      * @throws IOException
      */
-    public static void main(String[] args) throws IOException {
+    public static void performMerging(boolean isDebugging) throws IOException {
 
         //check if we are in debugging mode or not
-        List<String> inputArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
-
-        isDebugging = inputArguments.toString().contains("-agentlib:jdwp");
 
         if(isDebugging){
                 //clear file for debug
@@ -140,7 +136,7 @@ public class Merger
                     }
                 }
             }
-            saveMergedIndex(minPosting);
+            saveMergedIndex(minPosting, isDebugging);
 
         }
 
@@ -181,7 +177,7 @@ public class Merger
      *              (ii) add the offsets within the invertedIndex files from which the posting lists of the specific term start
      * @param finalPostingList
      */
-    private static void saveMergedIndex(PostingList finalPostingList) throws IOException {
+    private static void saveMergedIndex(PostingList finalPostingList, boolean isDebugging) throws IOException {
 
             LexiconEntry lexEntry = new LexiconEntry(finalPostingList.getTerm());
 

@@ -1,5 +1,6 @@
 package it.unipi.mircv.baseStructure;
 
+import it.unipi.mircv.compression.UnaryCompressor;
 import it.unipi.mircv.compression.VariableByteCompressor;
 
 import java.io.BufferedWriter;
@@ -147,8 +148,6 @@ public class SkippingBlock {
         b.setFreqSize(buffer.getInt());
         b.setNumPostings(buffer.getInt());
 
-        System.out.println(b);
-
         return b;
     }
 
@@ -185,7 +184,7 @@ public class SkippingBlock {
         bufferFreq.get(compressedFreq,0,freqSize);
 
         int[] decompressedArrayDocId= VariableByteCompressor.decompressArray(compressedDocIds,numPostings);
-        int[] decompressedArrayFreq= VariableByteCompressor.decompressArray(compressedFreq,numPostings);
+        int[] decompressedArrayFreq= UnaryCompressor.decompressArrayInt(compressedFreq,numPostings);
 
         for(int i=0;i<numPostings;i++){
                 Posting posting=new Posting(decompressedArrayDocId[i],decompressedArrayFreq[i]);

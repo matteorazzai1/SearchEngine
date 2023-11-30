@@ -16,7 +16,7 @@ import static it.unipi.mircv.Constants.*;
 import static it.unipi.mircv.Preprocesser.process;
 
 public class SPIMI {
-    public static void performIndexing(boolean isCompressed) throws IOException {
+    public static void performSpimi(boolean isCompressed) throws IOException {
         BufferedReader br = createBuffer(PATH_TO_COLLECTION, isCompressed);
         String line;
         String[] docPIDTokens;
@@ -134,7 +134,4 @@ public class SPIMI {
 
     }
 
-    public static void main(String[] args) throws IOException {
-        performIndexing(true);
-    }
 }
