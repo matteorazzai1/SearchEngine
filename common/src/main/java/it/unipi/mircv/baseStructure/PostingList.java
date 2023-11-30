@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import static it.unipi.mircv.Constants.INV_INDEX_DOCID;
 import static it.unipi.mircv.Constants.INV_INDEX_FREQS;
@@ -94,6 +95,10 @@ public class PostingList {
             postings.add(p);
         }
 
+    }
+
+    public void rewritePostings(ArrayList<Posting> newPostings) {
+        this.postings = newPostings;
     }
 
     public static ArrayList<Posting> retrievePostingList(String term) throws IOException {

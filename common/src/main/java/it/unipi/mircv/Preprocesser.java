@@ -23,7 +23,7 @@ public class Preprocesser {
             "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't",
             "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here",
             "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm",
-            "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more",
+            "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "might", "more",
             "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or",
             "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan't", "she",
             "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's",

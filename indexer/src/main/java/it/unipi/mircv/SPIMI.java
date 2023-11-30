@@ -21,7 +21,7 @@ import static it.unipi.mircv.Constants.*;
 import static it.unipi.mircv.Preprocesser.process;
 
 public class SPIMI {
-    public static void performIndexing(boolean isCompressed) throws IOException {
+    public static void performSpimi(boolean isCompressed) throws IOException {
 
         //create fileChannel for the final index
 
@@ -142,7 +142,4 @@ public class SPIMI {
 
     }
 
-    public static void main(String[] args) throws IOException {
-        performIndexing(true);
-    }
 }
