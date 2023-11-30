@@ -6,10 +6,7 @@ import it.unipi.mircv.compression.VariableByteCompressor;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryUsage;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -53,10 +50,9 @@ public class Merger
                FileUtils.clearDebugFiles();
         }
 
-        //merge the documentIndex intermediate files
-        mergeDocumentIndex();
-
+        //retrieve docIndex from disk
         DocumentIndex doc=DocumentIndex.getInstance();
+        doc.loadCollectionStats();
         doc.readFromFile();
 
         //Obtain all the paths of the intermediateIndex
@@ -145,15 +141,6 @@ public class Merger
         freqsChannel.close(); // Close the writer to save changes
     }
 
-    private static void mergeDocumentIndex() {
-
-        FileUtils.clearFile(PATH_TO_FINAL_DOCINDEX+".txt"); //make empty the file of the final docIndex or create it if it does not exist
-
-        for(int i=1; i<numIntermediateIndexes; i++){
-            FileUtils.appendFile(PATH_TO_INTERMEDIATE_DOCINDEX + i + ".txt", PATH_TO_FINAL_DOCINDEX + ".txt");
-        }
-    }
-
 
     public static String findMinTerm(HashMap<BufferedReader, PostingList> map) {
         String minTerm = null;
@@ -212,12 +199,14 @@ public class Merger
 
             }
 
-            int block_size = (int) Math.ceil(Math.sqrt(finalPostingList.getPostings().size()));
+            int block_size;
             int num_blocks;
             if(finalPostingList.getPostings().size() <= 256){
+                block_size= finalPostingList.getPostings().size();
                 num_blocks = 1;
             }
             else{
+                block_size = (int) Math.ceil(Math.sqrt(finalPostingList.getPostings().size()));
                 num_blocks = (int) Math.ceil((double)finalPostingList.getPostings().size()/block_size);
             }
 
