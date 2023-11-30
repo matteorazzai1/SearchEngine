@@ -25,6 +25,10 @@ public class SPIMI {
 
         //create fileChannel for the final index
 
+        if (!Files.exists(Path.of(PATH_TO_INTERMEDIATE_INDEX_FOLDER))) {
+            Files.createDirectory(Path.of(PATH_TO_INTERMEDIATE_INDEX_FOLDER));
+        }
+
         FileUtils.clearFile(PATH_TO_FINAL_DOCINDEX+".txt"); //make empty the file of the final docIndex or create it if it does not exist
 
         FileChannel docIndexChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCINDEX + ".txt"),
@@ -98,7 +102,6 @@ public class SPIMI {
     private static void flushDocIndex(ArrayList<Integer> docsLen, FileChannel docIndexIntermediate) {
 
         try{
-
             docIndexIntermediate.write(ByteBuffer.wrap(VariableByteCompressor.compressArrayInt(docsLen.stream()
                         .mapToInt(Integer::intValue)
                         .toArray())));
