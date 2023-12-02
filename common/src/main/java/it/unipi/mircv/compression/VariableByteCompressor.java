@@ -115,7 +115,7 @@ public class VariableByteCompressor {
             return decompressedArray;
     }
 
-
+/*
     private static byte[] integerCompression(int number){
             if (number == 0) {
                 return new byte[]{0};
@@ -142,12 +142,7 @@ public class VariableByteCompressor {
             return reversedList;
 
     }
-
-    /**
-     *
-     * @param array: input integers array
-     * @return bytes representing the input integers in variable byte encoding
-     */
+    
     public static byte[] compressIntArray(int[] array)  {
         ArrayList<Byte> compressedArray = new ArrayList<>();
 
@@ -189,6 +184,6 @@ public class VariableByteCompressor {
 
         return decompressedArray;
     }
-
+*/
 
 }
