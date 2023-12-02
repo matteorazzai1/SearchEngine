@@ -12,6 +12,7 @@ import static it.unipi.mircv.SPIMI.createBuffer;
 import static it.unipi.mircv.Preprocesser.process;
 import static it.unipi.mircv.Constants.PATH_TO_QUERIES;
 import static it.unipi.mircv.Ranking.DAATDisjunctive;
+import static it.unipi.mircv.Ranking.DAATConjunctive;
 public class Tester {
 
     public static void main(String[] args) throws IOException {
@@ -81,6 +82,7 @@ public class Tester {
                     entries.add(Lexicon.retrieveEntryFromDisk(term));
                 }
                 long query_start = 0;
+                PriorityQueue<Map.Entry<Integer, Double>> results = null;
                 if(query_choice.equals("1")){//Conjunctive
                     if(ranking_type.equals("1")){//TFIDF
                         query_start=System.currentTimeMillis();
@@ -93,11 +95,11 @@ public class Tester {
                     if(disjunctive_type.equals("1")){//DAATDisjunctive
                         if(ranking_type.equals("1")){//TFIDF
                             query_start=System.currentTimeMillis();
-                            DAATDisjunctive(index, entries , query,false, true);
+                            results = DAATDisjunctive(index, entries , query,false, true);
                             //TODO execute disjunctive with DAATDisjunctive and TFIDF
                         }else{//BM25
                             query_start=System.currentTimeMillis();
-                            DAATDisjunctive(index, entries , query,true, true);
+                            results = DAATDisjunctive(index, entries , query,true, true);
                             //TODO execute conjunctive with DAATDisjunctive and BM25
                         }
                     }else{//MaxScore
@@ -111,7 +113,7 @@ public class Tester {
                     }
                 }
                 long query_end = System.currentTimeMillis();
-
+                System.out.println(results);
                 query_time.add(query_end-query_start);
                 num_query++;
                 query=br.readLine();
@@ -120,6 +122,7 @@ public class Tester {
             for(Long time : query_time){
                 total_time+=time;
             }
+
 
             System.out.println(num_query+" queries executed in "+total_time/1000+" seconds");
             System.out.println("average query processing time: "+(total_time/num_query)/1000+" seconds");
