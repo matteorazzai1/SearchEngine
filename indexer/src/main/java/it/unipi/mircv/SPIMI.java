@@ -28,10 +28,19 @@ public class SPIMI {
         if (!Files.exists(Path.of(PATH_TO_INTERMEDIATE_INDEX_FOLDER))) {
             Files.createDirectory(Path.of(PATH_TO_INTERMEDIATE_INDEX_FOLDER));
         }
+        else{
+            FileUtils.clearFolder(PATH_TO_INTERMEDIATE_INDEX_FOLDER);
+        }
 
         FileUtils.clearFile(PATH_TO_FINAL_DOCINDEX+".txt"); //make empty the file of the final docIndex or create it if it does not exist
+        FileUtils.clearFile(PATH_TO_FINAL_DOCNO+".txt"); //make empty the file of the final docNo or create it if it does not exist
 
         FileChannel docIndexChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCINDEX + ".txt"),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
+
+        FileChannel docNoChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCNO + ".txt"),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
@@ -47,6 +56,9 @@ public class SPIMI {
 
         InvertedIndex invertedIndex;
         ArrayList<Integer> docsLen = new ArrayList<>();
+
+        ArrayList<Integer> docsNo = new ArrayList<>();
+
 
 
         while (!terminationFlag) {
@@ -75,6 +87,7 @@ public class SPIMI {
                     }
                 }
                 docsLen.add(tokens.length);
+                docsNo.add(Integer.parseInt(docPIDTokens[0]));
                 System.out.println(docID);
                 docID++;
             }
@@ -86,25 +99,31 @@ public class SPIMI {
                             (e1, e2) -> e1, LinkedHashMap::new)));
             System.out.println("flushing");
             flushIndex(invertedIndex.getPostingLists(), block_counter);
-            flushDocIndex(docsLen, docIndexChannel);
+            flushDocIndex(docsLen, docsNo, docIndexChannel, docNoChannel);
             block_counter++;
             InvertedIndex.resetInstance();
             docsLen.clear();
+            docsNo.clear();
             System.gc();
         }
         br.close();
         docIndexChannel.close();
+        docNoChannel.close();
         DocumentIndex.getInstance().saveCollectionStats((((double) docLenAccumulator) / (docID - 1)), (docID - 1));
     }
 
 
 
-    private static void flushDocIndex(ArrayList<Integer> docsLen, FileChannel docIndexIntermediate) {
+    private static void flushDocIndex(ArrayList<Integer> docsLen, ArrayList<Integer> docsNo, FileChannel docIndexIntermediate, FileChannel docNoChannel) {
 
         try{
             docIndexIntermediate.write(ByteBuffer.wrap(VariableByteCompressor.compressArrayInt(docsLen.stream()
                         .mapToInt(Integer::intValue)
                         .toArray())));
+
+            docNoChannel.write(ByteBuffer.wrap(VariableByteCompressor.compressArrayInt(docsNo.stream()
+                    .mapToInt(Integer::intValue)
+                    .toArray())));
 
         }catch (IOException e){
             System.out.println("Error in flushing the doc index");

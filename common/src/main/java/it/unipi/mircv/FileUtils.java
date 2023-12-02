@@ -85,4 +85,14 @@ public class FileUtils {
             e.printStackTrace();
         }
     }
+
+    public static void clearFolder(String pathToIntermediateIndexFolder) {
+        File folder = new File(pathToIntermediateIndexFolder);
+        File[] files = folder.listFiles();
+        if(files!=null) { //some JVMs return null for empty dirs
+            for(File f: files) {
+                f.delete();
+            }
+        }
+    }
 }
