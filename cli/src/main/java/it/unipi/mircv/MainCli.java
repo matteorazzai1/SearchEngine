@@ -7,7 +7,8 @@ import it.unipi.mircv.baseStructure.PostingList;
 import java.io.IOException;
 import java.util.*;
 
-import static it.unipi.mircv.Ranking.DAAT;
+import static it.unipi.mircv.Ranking.DAATDisjunctive;
+import static it.unipi.mircv.Ranking.DAATConjunctive;
 
 public class MainCli {
     public static void main(String[] args) throws IOException {
