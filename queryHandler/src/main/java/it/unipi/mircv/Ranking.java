@@ -26,7 +26,6 @@ public class Ranking {
                 .collect(Collectors.toMap(key -> key, key -> new AbstractMap.SimpleEntry<>(0, 0))); //couple which indicates position in the block and numBlock
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
-        lexiconEntries.sort(Comparator.comparing(LexiconEntry::getDf));
         ArrayList<PostingList> index = new ArrayList<>();
 
         FileChannel blocks=(FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
@@ -55,6 +54,7 @@ public class Ranking {
             scoreAccumulator = 0;
             for(int j=0; j<index.size(); j++){
                 p = index.get(j);
+
                 positionBlockHolder = nextGEQ(p, nextDocId, positions.get(p.getTerm()).getKey(),
                         positions.get(p.getTerm()).getValue(), lexiconEntries.get(j).getDescriptorOffset(), lexiconEntries.get(j).getNumBlocks(), blocks);
                 if (positionBlockHolder.getKey() != -1 && positionBlockHolder.getValue() != -1) {
@@ -88,11 +88,11 @@ public class Ranking {
             }
 
             if(finalScores.size() < k){
-                finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId-1, scoreAccumulator));
+                finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId, scoreAccumulator));
             }
             else if(finalScores.peek().getValue() < scoreAccumulator){
                 finalScores.poll();
-                finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId-1, scoreAccumulator));
+                finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId, scoreAccumulator));
 
             }
             nextDocId = minDocID(index, positions);
@@ -111,7 +111,6 @@ public class Ranking {
                 .collect(Collectors.toMap(key -> key, key -> new AbstractMap.SimpleEntry<>(0, 0))); //couple which indicates position in the block and numBlock
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
-        lexiconEntries.sort(Comparator.comparing(LexiconEntry::getDf));
         ArrayList<PostingList> index = new ArrayList<>();
 
         FileChannel blocks=(FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
@@ -125,6 +124,7 @@ public class Ranking {
             e.printStackTrace();
         }});
 
+        lexiconEntries.sort(Comparator.comparing(LexiconEntry::getDf));
         index.sort(Comparator.comparing(PostingList::getPostingsLength));
         PostingList shortestPosting = index.get(0);
         int nextDocId = shortestPosting.getPostings().get(0).getDocId();
@@ -141,22 +141,23 @@ public class Ranking {
             toCompute = true;
             for(int j=1; j<index.size(); j++){
                 p = index.get(j);
-                positionBlockHolder = nextGEQ(p, nextDocId, positions.get(p.getTerm()).getKey(),
-                        positions.get(p.getTerm()).getValue(), lexiconEntries.get(j).getDescriptorOffset(), lexiconEntries.get(j).getNumBlocks(), blocks);
-                currentKey = positionBlockHolder.getKey();
-                currentValue = positionBlockHolder.getValue();
-                if(currentKey == -1 && positionBlockHolder.getValue() == -1){
-                    positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(0, lexiconEntries.get(0).getNumBlocks()+1));
-                    toCompute = false;
-                    break;
-                }
-                else {
-                    positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(currentKey, currentValue));
-                    if (p.getPostings().get(currentKey).getDocId() != nextDocId){
+                if(positions.get(p.getTerm()).getValue() != lexiconEntries.get(j).getNumBlocks()) {
+                    positionBlockHolder = nextGEQ(p, nextDocId, positions.get(p.getTerm()).getKey(),
+                            positions.get(p.getTerm()).getValue(), lexiconEntries.get(j).getDescriptorOffset(), lexiconEntries.get(j).getNumBlocks(), blocks);
+                    currentKey = positionBlockHolder.getKey();
+                    currentValue = positionBlockHolder.getValue();
+                    if (currentKey == -1 && currentValue == -1) {
+                        positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(0, lexiconEntries.get(j).getNumBlocks()));
                         toCompute = false;
                         break;
-                    }
+                    } else {
+                        positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(currentKey, currentValue));
+                        if (p.getPostings().get(currentKey).getDocId() != nextDocId) {
+                            toCompute = false;
+                            break;
+                        }
 
+                    }
                 }
             }
 
@@ -181,11 +182,11 @@ public class Ranking {
                 }
 
                 if(finalScores.size() < k ){
-                    finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId-1, scoreAccumulator));
+                    finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId, scoreAccumulator));
                 }
                 else if(finalScores.peek().getValue() < scoreAccumulator){
                     finalScores.poll();
-                    finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId-1, scoreAccumulator));
+                    finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId, scoreAccumulator));
 
                 }
             }
@@ -206,7 +207,8 @@ public class Ranking {
         SkippingBlock skippingBlock = new SkippingBlock();
 
 
-        if (position+1 == p.getPostingsLength() && block+1 == numBlocks){
+
+        if (block == numBlocks){ //we have processed the entire posting list
             return new AbstractMap.SimpleEntry<>(-1, -1);
         }
         for (i = block; i<numBlocks; i++){
@@ -238,15 +240,15 @@ public class Ranking {
 
     public static void main(String[] args) throws IOException {
         ArrayList<LexiconEntry> entries = new ArrayList();
-        String query = "forza barletta";
+        String query = "ferrari lamborghini";
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
         docIndex.loadCollectionStats();
         docIndex.readFromFile();
 
         long start = System.currentTimeMillis();
-        LexiconEntry l1 = Lexicon.retrieveEntryFromDisk("forza");
-        LexiconEntry l2 = Lexicon.retrieveEntryFromDisk("barletta");
+        LexiconEntry l1 = Lexicon.retrieveEntryFromDisk("ferrari");
+        LexiconEntry l2 = Lexicon.retrieveEntryFromDisk("lamborghini");
 
         entries.add(l1);
         entries.add(l2);

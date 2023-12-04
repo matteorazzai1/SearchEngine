@@ -21,7 +21,7 @@ public class Tester {
         String disjunctive_type = "";
         String ranking_type;
 
-        LinkedList<LexiconEntry> entries=new LinkedList<>();
+        ArrayList<LexiconEntry> entries=new ArrayList<>();
         LinkedList<PostingList> index = new LinkedList<>();
         DocumentIndex.getInstance().readFromFile();
         //TODO operazioni di setup
@@ -82,7 +82,7 @@ public class Tester {
                     entries.add(Lexicon.retrieveEntryFromDisk(term));
                 }
                 long query_start = 0;
-                PriorityQueue<Map.Entry<Integer, Double>> results = null;
+                LinkedList results = null;
                 if(query_choice.equals("1")){//Conjunctive
                     if(ranking_type.equals("1")){//TFIDF
                         query_start=System.currentTimeMillis();
@@ -95,11 +95,11 @@ public class Tester {
                     if(disjunctive_type.equals("1")){//DAATDisjunctive
                         if(ranking_type.equals("1")){//TFIDF
                             query_start=System.currentTimeMillis();
-                            results = DAATDisjunctive(index, entries , query,false, true);
+                            results = DAATDisjunctive(entries , query,false, 5);
                             //TODO execute disjunctive with DAATDisjunctive and TFIDF
                         }else{//BM25
                             query_start=System.currentTimeMillis();
-                            results = DAATDisjunctive(index, entries , query,true, true);
+                            results = DAATDisjunctive(entries , query,true, 5);
                             //TODO execute conjunctive with DAATDisjunctive and BM25
                         }
                     }else{//MaxScore
