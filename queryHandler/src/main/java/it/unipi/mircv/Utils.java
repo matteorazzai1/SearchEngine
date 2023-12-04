@@ -2,10 +2,7 @@ package it.unipi.mircv;
 import it.unipi.mircv.baseStructure.DocumentIndex;
 import it.unipi.mircv.baseStructure.PostingList;
 
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 import static it.unipi.mircv.Constants.b;
 import static it.unipi.mircv.Constants.k1;
@@ -26,7 +23,7 @@ public class Utils {
         return processedQuery;
     }
 
-    public static int minDocID(LinkedList<PostingList> index, Map<String, AbstractMap.SimpleEntry<Integer, Integer>> positions){ //positions are indexes, not docids
+    public static int minDocID(ArrayList<PostingList> index, Map<String, AbstractMap.SimpleEntry<Integer, Integer>> positions){ //positions are indexes, not docids
         int minID = Integer.MAX_VALUE;
         for (PostingList p : index){
             if(positions.get(p.getTerm()).getKey() < p.getPostings().size()){
