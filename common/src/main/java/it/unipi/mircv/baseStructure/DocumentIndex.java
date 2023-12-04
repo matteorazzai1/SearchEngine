@@ -13,11 +13,12 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.prefs.Preferences;
 
-import static it.unipi.mircv.Constants.LEXICON_PATH;
-import static it.unipi.mircv.Constants.PATH_TO_FINAL_DOCINDEX;
+import static it.unipi.mircv.Constants.*;
 
 public class DocumentIndex {
     private static DocumentIndex instance;
+
+    private int[] docsNo;
     private int[] docsLen;
     private double AVDL;
     private int collectionSize;
@@ -56,6 +57,14 @@ public class DocumentIndex {
         docsLen[docsLen.length-1] = c;
     }
 
+    public int[] getDocsNo() {
+        return docsNo;
+    }
+
+    public void setDocsNo(int[] docsNo) {
+        this.docsNo = docsNo;
+    }
+
 
     public void readFromFile() throws IOException {
 
@@ -89,5 +98,28 @@ public class DocumentIndex {
         Preferences prefs = Preferences.userNodeForPackage(DocumentIndex.class);
         this.setAVDL(Double.parseDouble(prefs.get("AVDL", "")));
         this.setCollectionSize(Integer.parseInt(prefs.get("collectionSize", "")));
+    }
+
+    public void retrieveDocsNo() throws IOException {
+
+        instance.docsNo = new int[instance.getCollectionSize()];
+
+        FileChannel docNoChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCNO + ".txt"),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
+        try {
+
+            MappedByteBuffer buffer=docNoChannel.map(FileChannel.MapMode.READ_WRITE,0, FileUtils.retrieveFileSize(PATH_TO_FINAL_DOCNO+ ".txt"));
+
+            byte[] bytes = new byte[buffer.remaining()];
+            buffer.get(bytes);
+
+            instance.docsNo = VariableByteCompressor.decompressArray(bytes, instance.collectionSize);
+            docNoChannel.close();
+        } catch (IOException e) {
+            System.out.println("Cannot read the DocIndex");
+        }
+
     }
 }

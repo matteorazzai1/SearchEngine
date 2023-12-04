@@ -197,7 +197,7 @@ public class Ranking {
         return output;
     }
 
-    private static AbstractMap.SimpleEntry<Integer, Integer> nextGEQ(PostingList p, int nextDocId, int position, int block, long descriptorOffset, int numBlocks, FileChannel blockChannel) throws IOException {
+    public static AbstractMap.SimpleEntry<Integer, Integer> nextGEQ(PostingList p, int nextDocId, int position, int block, long descriptorOffset, int numBlocks, FileChannel blockChannel) throws IOException {
         int i,
             j,
             currentId,
@@ -252,7 +252,9 @@ public class Ranking {
         entries.add(l2);
 
 
-        System.out.println(DAATDisjunctive(entries, query, true, 5));
+        //System.out.println(MaxScore.maxScoreQuery(query, 10, false));
+        System.out.println(DAATConjunctive(entries, query, true, 5));
+
         long finish = System.currentTimeMillis();
         long timeElapsed = finish - start;
         System.out.println("Time elapsed: " + timeElapsed);

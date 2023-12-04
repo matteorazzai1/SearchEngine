@@ -7,6 +7,7 @@ public class Constants {
     public static final String PATH_TO_INTERMEDIATE_INDEX_FOLDER = "indexer/data/IntermediateIndexes";
 
     public static final String PATH_TO_FINAL_DOCINDEX = "indexer/data/docIndex";
+    public static final String PATH_TO_FINAL_DOCNO = "indexer/data/docNo";
 
     public static final String LEXICON_PATH="indexer/data/lexicon.dat";
     public static final String INV_INDEX_DEBUG="indexer/data/invIndex_debug.txt";
