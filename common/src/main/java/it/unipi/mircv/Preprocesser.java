@@ -68,6 +68,14 @@ public class Preprocesser {
         return newTerms;
     }
 
+    public static String processCLIQuery(String row) {
+        List<String>terms = parse(row);
+        terms=stem(terms);
+        String termsString = "";
+        for(String term : terms){
+            termsString += term + " ";    }
+        return termsString;}
+
     public static String process(String row) {
         List<String>terms = parse(row);
         terms=stem(terms);

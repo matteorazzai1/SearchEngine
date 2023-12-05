@@ -1,5 +1,6 @@
 package it.unipi.mircv;
 
+import ca.rmen.porterstemmer.PorterStemmer;
 import it.unipi.mircv.baseStructure.*;
 
 import java.io.IOException;
@@ -74,7 +75,13 @@ public class Ranking {
                         );
 
                         if (currentKey + 1 == p.getPostingsLength()) {
-                            positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(0, currentValue + 1));
+                            if(currentValue + 1 < lexiconEntries.get(j).getNumBlocks()){
+                                positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(0, currentValue + 1));
+                                index.set(j, new PostingList(p.getTerm(),readSkippingBlocks(lexiconEntries.get(j).getDescriptorOffset() +
+                                        (currentValue+1)*SkippingBlock.getEntrySize(), blocks).retrieveBlock()));
+                            } else {
+                                positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(0, lexiconEntries.get(j).getNumBlocks()));
+                            }
                         } else {
                             positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(currentKey + 1, currentValue));
                         }
@@ -96,6 +103,7 @@ public class Ranking {
 
             }
             nextDocId = minDocID(index, positions);
+
         }
         LinkedList<Map.Entry<Integer, Double>> output = new LinkedList<>(finalScores);
         output.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
@@ -209,6 +217,7 @@ public class Ranking {
 
 
         if (block == numBlocks){ //we have processed the entire posting list
+
             return new AbstractMap.SimpleEntry<>(-1, -1);
         }
         for (i = block; i<numBlocks; i++){
@@ -216,6 +225,7 @@ public class Ranking {
                 skippingBlock = readSkippingBlocks(descriptorOffset + (long) i *SkippingBlock.getEntrySize(), blockChannel);
                 nextBlockVal = skippingBlock.getMaxDocId();
             }
+
             else if (i != block){
                 p.rewritePostings(skippingBlock.retrieveBlock());
                 for(j = 0; j <p.getPostingsLength(); j++){
@@ -234,6 +244,7 @@ public class Ranking {
                 }
             }
         }
+
         return new AbstractMap.SimpleEntry<>(-1, -1);
     }
 
@@ -245,18 +256,16 @@ public class Ranking {
         DocumentIndex docIndex = DocumentIndex.getInstance();
         docIndex.loadCollectionStats();
         docIndex.readFromFile();
+        LexiconEntry entry;
 
         long start = System.currentTimeMillis();
-        LexiconEntry l1 = Lexicon.retrieveEntryFromDisk("ferrari");
-        LexiconEntry l2 = Lexicon.retrieveEntryFromDisk("lamborghini");
+        String processedQuery = Preprocesser.processCLIQuery(query);
+        for(String term : processedQuery.split(" ")){
+            entry = Lexicon.retrieveEntryFromDisk(term);
+            entries.add(entry);
+        }
 
-        entries.add(l1);
-        entries.add(l2);
-
-
-        //System.out.println(MaxScore.maxScoreQuery(query, 10, false));
-        System.out.println(DAATConjunctive(entries, query, true, 5));
-
+        System.out.println(DAATConjunctive(entries, processedQuery, true, 5));
         long finish = System.currentTimeMillis();
         long timeElapsed = finish - start;
         System.out.println("Time elapsed: " + timeElapsed);
