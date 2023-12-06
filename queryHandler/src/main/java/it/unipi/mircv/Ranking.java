@@ -44,55 +44,60 @@ public class Ranking {
         double scoreAccumulator;
         AbstractMap.SimpleEntry<Integer, Integer> positionBlockHolder;
         PostingList p;
-        int currentKey;
-        int currentValue;
+        long descriptorOffset;
+        int numBlocks;
 
         lexiconEntries.sort(Comparator.comparing(LexiconEntry::getTerm));
         index.sort(Comparator.comparing(PostingList::getTerm));
 
-
         while(nextDocId != Integer.MAX_VALUE){
             scoreAccumulator = 0;
-            for(int j=0; j<index.size(); j++){
+            for (int j = 0; j < index.size(); ) {
+
                 p = index.get(j);
+                Map.Entry<Integer, Integer> termPositions = positions.get(p.getTerm());
+                descriptorOffset = lexiconEntries.get(j).getDescriptorOffset();
+                numBlocks = lexiconEntries.get(j).getNumBlocks();
 
-                positionBlockHolder = nextGEQ(p, nextDocId, positions.get(p.getTerm()).getKey(),
-                        positions.get(p.getTerm()).getValue(), lexiconEntries.get(j).getDescriptorOffset(), lexiconEntries.get(j).getNumBlocks(), blocks);
-                if (positionBlockHolder.getKey() != -1 && positionBlockHolder.getValue() != -1) {
-                    currentKey = positionBlockHolder.getKey();
-                    currentValue = positionBlockHolder.getValue();
+                positionBlockHolder = nextGEQ(p, nextDocId, termPositions.getKey(),
+                termPositions.getValue(), descriptorOffset, numBlocks, blocks);
 
-                    positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(currentKey, currentValue));
 
-                    Posting postingEntry = p.getPostings().get(currentKey);
-                    if (postingEntry.getDocId() == nextDocId) {
-                        scoreAccumulator += scoringFunction(
-                                isBM25,
-                                processedQuery.get(p.getTerm()),
-                                postingEntry.getFrequency(),
-                                lexiconEntries.get(j).getIdf(),
-                                docIndex.getDocsLen()[nextDocId - 1]
-                        );
-
-                        if (currentKey + 1 == p.getPostingsLength()) {
-                            if(currentValue + 1 < lexiconEntries.get(j).getNumBlocks()){
-                                positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(0, currentValue + 1));
-                                index.set(j, new PostingList(p.getTerm(),readSkippingBlocks(lexiconEntries.get(j).getDescriptorOffset() +
-                                        (currentValue+1)*SkippingBlock.getEntrySize(), blocks).retrieveBlock()));
-                            } else {
-                                positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(0, lexiconEntries.get(j).getNumBlocks()));
-                            }
-                        } else {
-                            positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(currentKey + 1, currentValue));
-                        }
-                    }
-                } else {
+                if (positionBlockHolder == null) {
                     index.remove(j);
                     lexiconEntries.remove(j);
-                    index.trimToSize();
-                    lexiconEntries.trimToSize();
+                    continue;
                 }
+
+                Posting postingEntry = p.getPostings().get(positionBlockHolder.getKey());
+                if (postingEntry.getDocId() == nextDocId) {
+                    scoreAccumulator += scoringFunction(
+                            isBM25,
+                            processedQuery.get(p.getTerm()),
+                            postingEntry.getFrequency(),
+                            lexiconEntries.get(j).getIdf(),
+                            docIndex.getDocsLen()[nextDocId - 1]
+                    );
+
+                    //fastest way to move forward by one, since I may need to go in the next block, so I use nextDocId+1
+                    positionBlockHolder = nextGEQ(p, nextDocId + 1, termPositions.getKey(),
+                            termPositions.getValue(), descriptorOffset, numBlocks, blocks);
+
+
+                    if (positionBlockHolder == null) {
+                        index.remove(j);
+                        lexiconEntries.remove(j);
+                        continue;
+                    }
+
+                }
+                positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(positionBlockHolder.getKey(), positionBlockHolder.getValue()));
+                //we update here since we may have removed an element
+                j++;
             }
+
+            index.trimToSize();
+            lexiconEntries.trimToSize();
 
             if(finalScores.size() < k){
                 finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId, scoreAccumulator));
@@ -116,7 +121,7 @@ public class Ranking {
         PriorityQueue<Map.Entry<Integer, Double>> finalScores = new PriorityQueue<>(k, Map.Entry.comparingByValue());
 
         Map<String, AbstractMap.SimpleEntry<Integer, Integer>> positions = processedQuery.keySet().stream()
-                .collect(Collectors.toMap(key -> key, key -> new AbstractMap.SimpleEntry<>(0, 0))); //couple which indicates position in the block and numBlock
+                .collect(Collectors.toMap(key -> key, key -> new AbstractMap.SimpleEntry<>(0, 0))); //couple which indicates positionHolder in the block and numBlock
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
         ArrayList<PostingList> index = new ArrayList<>();
@@ -135,51 +140,39 @@ public class Ranking {
         lexiconEntries.sort(Comparator.comparing(LexiconEntry::getDf));
         index.sort(Comparator.comparing(PostingList::getPostingsLength));
         PostingList shortestPosting = index.get(0);
+        LexiconEntry shortestLexiconEntry = lexiconEntries.get(0);
         int nextDocId = shortestPosting.getPostings().get(0).getDocId();
         double scoreAccumulator;
         boolean toCompute;
         AbstractMap.SimpleEntry<Integer, Integer> positionBlockHolder;
         PostingList p;
-        int currentKey;
-        int currentValue;
-        String shortestTerm = shortestPosting.getTerm();
 
 
-        while(positions.get(shortestTerm).getValue() < lexiconEntries.get(0).getNumBlocks()){
+
+        while(true){
             toCompute = true;
             for(int j=1; j<index.size(); j++){
                 p = index.get(j);
-                if(positions.get(p.getTerm()).getValue() != lexiconEntries.get(j).getNumBlocks()) {
-                    positionBlockHolder = nextGEQ(p, nextDocId, positions.get(p.getTerm()).getKey(),
-                            positions.get(p.getTerm()).getValue(), lexiconEntries.get(j).getDescriptorOffset(), lexiconEntries.get(j).getNumBlocks(), blocks);
-                    currentKey = positionBlockHolder.getKey();
-                    currentValue = positionBlockHolder.getValue();
-                    if (currentKey == -1 && currentValue == -1) {
-                        positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(0, lexiconEntries.get(j).getNumBlocks()));
-                        toCompute = false;
-                        break;
-                    } else {
-                        positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(currentKey, currentValue));
-                        if (p.getPostings().get(currentKey).getDocId() != nextDocId) {
-                            toCompute = false;
-                            break;
-                        }
+                Map.Entry<Integer, Integer> termPositions = positions.get(p.getTerm());
 
-                    }
+                positionBlockHolder = nextGEQ(p, nextDocId, termPositions.getKey(),
+                        termPositions.getValue(), lexiconEntries.get(j).getDescriptorOffset(), lexiconEntries.get(j).getNumBlocks(), blocks);
+
+                //one of the postings is finished, so we can stop. This may happen having postings like (1000:1, 1001:1), (10:1, 20:1, 30:1)
+                if(positionBlockHolder == null){
+                    LinkedList<Map.Entry<Integer, Double>> output = new LinkedList<>(finalScores);
+                    output.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+                    blocks.close();
+                    return output;
                 }
-            }
 
-            if(positions.get(shortestTerm).getKey() == shortestPosting.getPostingsLength()-1){
-                positions.put(shortestTerm, new AbstractMap.SimpleEntry<>(0, positions.get(shortestTerm).getValue()+1));
-                shortestPosting = new PostingList(shortestTerm, readSkippingBlocks(lexiconEntries.get(0).getDescriptorOffset() + (long) positions.get(shortestTerm).getValue()
-                        *SkippingBlock.getEntrySize(), blocks).retrieveBlock()) ;
-                nextDocId = shortestPosting.getPostings().get(0).getDocId();
-            }
-            else{
-                positions.put(shortestTerm, new AbstractMap.SimpleEntry<>(positions.get(shortestTerm).getKey()+1, positions.get(shortestTerm).getValue()));
-                nextDocId = shortestPosting.getPostings().get(positions.get(shortestTerm).getKey()).getDocId();
-            }
+                positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(positionBlockHolder.getKey(), positionBlockHolder.getValue()));
 
+                if (p.getPostings().get(positionBlockHolder.getKey()).getDocId() != nextDocId){
+                    toCompute = false;
+                    break;
+                }
+        }
 
             if(toCompute){
                 scoreAccumulator = 0;
@@ -195,9 +188,16 @@ public class Ranking {
                 else if(finalScores.peek().getValue() < scoreAccumulator){
                     finalScores.poll();
                     finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId, scoreAccumulator));
-
                 }
             }
+
+            //i have to go on the next position of the shortest posting list, so i use nextDocID+1 and call nextGEQ, if we get null we're at the end of the posting list
+            positionBlockHolder = nextGEQ(shortestPosting, nextDocId + 1, positions.get(shortestPosting.getTerm()).getKey(),
+                    positions.get(shortestPosting.getTerm()).getValue(), shortestLexiconEntry.getDescriptorOffset(), shortestLexiconEntry.getNumBlocks(), blocks);
+            if (positionBlockHolder == null) {
+                break;
+            }
+            nextDocId = shortestPosting.getPostings().get(positionBlockHolder.getKey()).getDocId();
         }
 
         LinkedList<Map.Entry<Integer, Double>> output = new LinkedList<>(finalScores);
@@ -206,52 +206,43 @@ public class Ranking {
         return output;
     }
 
-    public static AbstractMap.SimpleEntry<Integer, Integer> nextGEQ(PostingList p, int nextDocId, int position, int block, long descriptorOffset, int numBlocks, FileChannel blockChannel) throws IOException {
-        int i,
-            j,
-            currentId,
-            nextBlockVal = p.getPostings().get(p.getPostingsLength()-1).getDocId(); //nextBlockVal is the max docId of the current block
-
+    public static AbstractMap.SimpleEntry<Integer, Integer> nextGEQ(PostingList p, int nextDocId, int position,
+                                                                    int block, long descriptorOffset, int numBlocks,
+                                                                    FileChannel blockChannel) throws IOException {
+        // Variable initialization
+        int currentId;
+        int nextBlockVal = p.getPostings().get(p.getPostingsLength()-1).getDocId();
         SkippingBlock skippingBlock = new SkippingBlock();
 
-
-
-        if (block == numBlocks){ //we have processed the entire posting list
-
-            return new AbstractMap.SimpleEntry<>(-1, -1);
+        // Check if the entire posting list has been processed
+        if (block == numBlocks) {
+            return null;
         }
-        for (i = block; i<numBlocks; i++){
-            if (nextBlockVal<nextDocId){
-                skippingBlock = readSkippingBlocks(descriptorOffset + (long) i *SkippingBlock.getEntrySize(), blockChannel);
+
+        for (int i = block; i < numBlocks; i++) {
+            if (nextBlockVal < nextDocId) {
+                skippingBlock = readSkippingBlocks(descriptorOffset + (long) i * SkippingBlock.getEntrySize(), blockChannel);
                 nextBlockVal = skippingBlock.getMaxDocId();
-            }
-
-            else if (i != block){
-                p.rewritePostings(skippingBlock.retrieveBlock());
-                for(j = 0; j <p.getPostingsLength(); j++){
-                    currentId = p.getPostings().get(j).getDocId();
-                    if(currentId>=nextDocId){
-                        return new AbstractMap.SimpleEntry<>(j, i);
-                    }
+            } else {
+                if (i != block) {
+                    p.rewritePostings(skippingBlock.retrieveBlock());
                 }
-            }
-            else{
-                for(j = position; j <p.getPostingsLength(); j++){
+                int startPos = (i == block) ? position : 0;
+                for (int j = startPos; j < p.getPostingsLength(); j++) {
                     currentId = p.getPostings().get(j).getDocId();
-                    if(currentId>=nextDocId){
+                    if (currentId >= nextDocId) {
                         return new AbstractMap.SimpleEntry<>(j, i);
                     }
                 }
             }
         }
-
-        return new AbstractMap.SimpleEntry<>(-1, -1);
+        return null;
     }
 
 
     public static void main(String[] args) throws IOException {
         ArrayList<LexiconEntry> entries = new ArrayList();
-        String query = "ferrari lamborghini";
+        String query = "food cat dog";
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
         docIndex.loadCollectionStats();
