@@ -85,7 +85,7 @@ public class MaxScore {
 
             double partialScore = 0;
 
-            int nextDocId=docIndex.getCollectionSize();
+            int nextDocId=docIndex.getCollectionSize()+1;
 
             //Process Essential Lists -------------
 
@@ -121,7 +121,7 @@ public class MaxScore {
                         else{
                             //we have reached the end of the postingList
                             positions.put(pl.getTerm(),new AbstractMap.SimpleEntry<>(-1,-1)); //we set the position to -1 to indicate that we have reached the end of the postingList
-                            break;
+
                         }
                     }
 
@@ -135,7 +135,6 @@ public class MaxScore {
 
                 if(pl.getPostings().get(positions.get(pl.getTerm()).getKey()).getDocId()<nextDocId){
                         nextDocId=pl.getPostings().get(positions.get(pl.getTerm()).getKey()).getDocId();
-                        //System.out.println("nextDocId: "+nextDocId);
                 }
 
             }
@@ -158,26 +157,21 @@ public class MaxScore {
                     break;
 
                 AbstractMap.SimpleEntry<Integer, Integer> positionBlockHolder;
-                positionBlockHolder = nextGEQ(pl, nextDocId, positions.get(pl.getTerm()).getKey(),
+                positionBlockHolder = nextGEQ(pl, currentDocId, positions.get(pl.getTerm()).getKey(),
                         positions.get(pl.getTerm()).getValue(), lexiconEntries.get(i).getDescriptorOffset(), lexiconEntries.get(i).getNumBlocks(), blocksChannel);
-                if(positionBlockHolder.getKey() == -1){
 
-                    if(positionBlockHolder.getValue() != -1){
-
-                        positions.put(pl.getTerm(), new AbstractMap.SimpleEntry<>(0, positionBlockHolder.getValue()));
-
-                        PostingList postingBlock=new PostingList(pl.getTerm(), readSkippingBlocks(lexiconEntries.get(i).getDescriptorOffset() + (long) positions.get(pl.getTerm()).getValue()
-                                *SkippingBlock.getEntrySize(), blocksChannel).retrieveBlock()) ;
-                        index.set(i,postingBlock);
-                        break;
-                    }
-                    else{
-                        positions.put(pl.getTerm(), new AbstractMap.SimpleEntry<>(-1,-1));
-                        break;
-                    }
+                if(positionBlockHolder==null){
+                    positions.put(pl.getTerm(), new AbstractMap.SimpleEntry<>(-1,-1)); //we set the position to -1 to indicate that we have reached the end of the postingList
                 }
                 else{
                     positions.put(pl.getTerm(), positionBlockHolder);
+
+                    if(positionBlockHolder.getKey()==0){
+                        //we have to retrieve the new block
+                        PostingList postingBlock=new PostingList(pl.getTerm(), readSkippingBlocks(lexiconEntries.get(i).getDescriptorOffset() + (long) positions.get(pl.getTerm()).getValue()
+                                *SkippingBlock.getEntrySize(), blocksChannel).retrieveBlock()) ;
+                        index.set(i,postingBlock);
+                    }
                 }
 
                 if(pl.getPostings()==null || positions.get(pl.getTerm()).getKey()==-1){
@@ -196,28 +190,31 @@ public class MaxScore {
             //-----------LIST PIVOT UPDATE----------
             //if the queue does not have k elements or the partialScore calculated is greater than the worst score in the queue in ascending order of score
             //it means that we have to add it to the priority queue
-            if(incMaxScoreQueue.size()<k || incMaxScoreQueue.peek().getValue()<partialScore){
-
-                    //System.out.println("added to queue");
-
-                    if(incMaxScoreQueue.size()==k){
-                        incMaxScoreQueue.poll();
-                    }
+            //System.out.println("currentDocId: "+currentDocId+" score: "+partialScore);
+            if(incMaxScoreQueue.size()<k) {
                     incMaxScoreQueue.offer(new java.util.AbstractMap.SimpleEntry<>(currentDocId,partialScore));
+            }
+            else {
+                if( incMaxScoreQueue.peek().getValue()<partialScore) {
+                    incMaxScoreQueue.poll();
+
+                    incMaxScoreQueue.offer(new java.util.AbstractMap.SimpleEntry<>(currentDocId, partialScore));
                     //System.out.println("currentDocId: "+currentDocId+" score: "+partialScore);
 
-                    threshold=incMaxScoreQueue.peek().getValue();
+                }
 
-                    while(pivot<index.size() && ub[pivot]<=threshold){
-                        pivot=pivot+1;
-                        //System.out.println("pivot: "+pivot);
-                    }
+                threshold=incMaxScoreQueue.peek().getValue();
+
+                while(pivot<index.size() && ub[pivot]<=threshold){
+                    pivot=pivot+1;
+                    //System.out.println("pivot: "+pivot);
+                }
             }
 
             if(checkReadingPostingLists(positions)){
                 break;
             }
-            if(nextDocId==docIndex.getCollectionSize()){
+            if(nextDocId==docIndex.getCollectionSize()+1){
                 break;
             }
 
