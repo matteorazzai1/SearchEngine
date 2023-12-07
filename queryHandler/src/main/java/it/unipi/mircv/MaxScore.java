@@ -164,14 +164,10 @@ public class MaxScore {
                     positions.put(pl.getTerm(), new AbstractMap.SimpleEntry<>(-1,-1)); //we set the position to -1 to indicate that we have reached the end of the postingList
                 }
                 else{
+                    //update index with the new postingList, updated during nextGEQ
+                    index.set(i,pl);
+                    //update the position
                     positions.put(pl.getTerm(), positionBlockHolder);
-
-                    if(positionBlockHolder.getKey()==0){
-                        //we have to retrieve the new block
-                        PostingList postingBlock=new PostingList(pl.getTerm(), readSkippingBlocks(lexiconEntries.get(i).getDescriptorOffset() + (long) positions.get(pl.getTerm()).getValue()
-                                *SkippingBlock.getEntrySize(), blocksChannel).retrieveBlock()) ;
-                        index.set(i,postingBlock);
-                    }
                 }
 
                 if(pl.getPostings()==null || positions.get(pl.getTerm()).getKey()==-1){
