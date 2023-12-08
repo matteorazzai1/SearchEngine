@@ -19,9 +19,19 @@ public class Ranking {
 
     //index is fine as a list, since we do not need to access a specific entry, while the lexicon entry is needed as
     //Map because we need the IDF of a specific term
-    public static LinkedList<Map.Entry<Integer, Double>> DAATDisjunctive(ArrayList<LexiconEntry> lexiconEntries, String query, boolean isBM25, int k) throws IOException {
+    public static LinkedList<Map.Entry<Integer, Double>> DAATDisjunctive(String query, boolean isBM25, int k) throws IOException {
         HashMap<String, Integer> processedQuery = queryToDict(query);
         PriorityQueue<Map.Entry<Integer, Double>> finalScores = new PriorityQueue<>(k, Map.Entry.comparingByValue());
+
+        ArrayList<LexiconEntry> lexiconEntries = new ArrayList<>();
+
+        for(Map.Entry<String, Integer> e:processedQuery.entrySet()){
+            //System.out.println(e);
+            String term=e.getKey();
+            LexiconEntry entry = Lexicon.retrieveEntryFromDisk(term);
+            lexiconEntries.add(entry);
+        }
+
 
         Map<String, AbstractMap.SimpleEntry<Integer, Integer>> positions = processedQuery.keySet().stream()
                 .collect(Collectors.toMap(key -> key, key -> new AbstractMap.SimpleEntry<>(0, 0))); //couple which indicates position in the block and numBlock
@@ -221,7 +231,8 @@ public class Ranking {
 
         for (int i = block; i < numBlocks; i++) {
             if (nextBlockVal < nextDocId) {
-                skippingBlock = readSkippingBlocks(descriptorOffset + (long) i * SkippingBlock.getEntrySize(), blockChannel);
+                //TODO (check) se siamo qui e per esempio block =0, significa che quello che sto cercando è in 1, perchè non leggo blocco (i+1)?
+                skippingBlock = readSkippingBlocks(descriptorOffset + (long) (i+1) * SkippingBlock.getEntrySize(), blockChannel);
                 nextBlockVal = skippingBlock.getMaxDocId();
             } else {
                 if (i != block) {
@@ -241,22 +252,22 @@ public class Ranking {
 
 
     public static void main(String[] args) throws IOException {
-        ArrayList<LexiconEntry> entries = new ArrayList();
-        String query = "food cat dog";
+        //ArrayList<LexiconEntry> entries = new ArrayList();
+        String query = "counti new york new york";
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
         docIndex.loadCollectionStats();
         docIndex.readFromFile();
-        LexiconEntry entry;
+        //LexiconEntry entry;
 
         long start = System.currentTimeMillis();
         String processedQuery = Preprocesser.processCLIQuery(query);
-        for(String term : processedQuery.split(" ")){
+        /*for(String term : processedQuery.split(" ")){
             entry = Lexicon.retrieveEntryFromDisk(term);
             entries.add(entry);
-        }
-
-        System.out.println(DAATConjunctive(entries, processedQuery, true, 5));
+        }*/
+        System.out.println(MaxScore.maxScoreQuery(processedQuery, 5, true));
+        System.out.println(DAATDisjunctive(processedQuery, true, 5));
         long finish = System.currentTimeMillis();
         long timeElapsed = finish - start;
         System.out.println("Time elapsed: " + timeElapsed);
