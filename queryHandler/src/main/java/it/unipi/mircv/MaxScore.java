@@ -20,9 +20,19 @@ public class MaxScore {
 
 
 
-    public static LinkedList<Map.Entry<Integer, Double>> maxScoreQuery(ArrayList<LexiconEntry> lexiconEntries,String query, int k, boolean isBM25) throws IOException {
+    public static LinkedList<Map.Entry<Integer, Double>> maxScoreQuery(String query, int k, boolean isBM25) throws IOException {
 
         HashMap<String, Integer> processedQuery = Utils.queryToDict(query);
+
+        ArrayList<LexiconEntry> lexiconEntries = new ArrayList<>();
+
+        for(Map.Entry<String, Integer> e:processedQuery.entrySet()){
+            //System.out.println(e);
+            String term=e.getKey();
+            LexiconEntry entry = Lexicon.retrieveEntryFromDisk(term);
+            lexiconEntries.add(entry);
+        }
+
 
         FileChannel blocksChannel=(FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
@@ -64,13 +74,13 @@ public class MaxScore {
         else
             ub[0]= lexiconEntries.get(0).getMaxTfidf(); //take the value with the lowest upper bound
 
-        for (int i=0;i<lexiconEntries.size();i++) {
-            if(i>0){
+        for (int i=1;i<lexiconEntries.size();i++) {
+
                 if(isBM25)
                     ub[i]=ub[i-1]+lexiconEntries.get(i).getMaxTfidf();
                 else
                     ub[i]=ub[i-1]+lexiconEntries.get(i).getMaxTfidf();;
-            }
+
         }
 
 

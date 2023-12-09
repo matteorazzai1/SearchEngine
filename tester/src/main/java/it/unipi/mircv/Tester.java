@@ -23,7 +23,10 @@ public class Tester {
 
         ArrayList<LexiconEntry> entries=new ArrayList<>();
         LinkedList<PostingList> index = new LinkedList<>();
-        DocumentIndex.getInstance().readFromFile();
+        DocumentIndex docIndex = DocumentIndex.getInstance();
+        docIndex.loadCollectionStats();
+        docIndex.readFromFile();
+
         //TODO operazioni di setup
         while(true){
             System.out.println("Select one of the following options: \n 1: Conjunctive query\n 2: Disjunctive query\n 3: exit");
@@ -74,15 +77,16 @@ public class Tester {
                 query=process(query);
                 query_split=query.split("\t");
                 query=query_split[1];
-                System.out.println("query: "+query);
+                //System.out.println("query: "+query);
                 for(String term : query.split(" ")){
-                    System.out.println("term: "+term);
+                    //System.out.println("term: "+term);
                     PostingList post = new PostingList(term, PostingList.retrievePostingList(term));
                     index.add(post);
                     entries.add(Lexicon.retrieveEntryFromDisk(term));
                 }
                 long query_start = 0;
-                LinkedList results = null;
+                LinkedList<Map.Entry<Integer, Double>> results = null;
+                //LinkedList<Map.Entry<Integer, Double>> resultsM = null;
                 if(query_choice.equals("1")){//Conjunctive
                     if(ranking_type.equals("1")){//TFIDF
                         query_start=System.currentTimeMillis();
@@ -95,11 +99,24 @@ public class Tester {
                     if(disjunctive_type.equals("1")){//DAATDisjunctive
                         if(ranking_type.equals("1")){//TFIDF
                             query_start=System.currentTimeMillis();
-                            results = DAATDisjunctive(entries , query,false, 5);
+                            results = DAATDisjunctive( query,false, 5);
                             //TODO execute disjunctive with DAATDisjunctive and TFIDF
                         }else{//BM25
                             query_start=System.currentTimeMillis();
-                            results = DAATDisjunctive(entries , query,true, 5);
+                            results = DAATDisjunctive( query,true, 5);
+                            /*System.out.println(query);
+
+
+                            resultsM = MaxScore.maxScoreQuery(query,5,true);
+
+
+
+                            if(!compareLinkedLists(results,resultsM)){
+                                System.out.println("ERRORE");
+
+                                System.out.println(resultsM);
+                                System.out.println(results);
+                            }*/
                             //TODO execute conjunctive with DAATDisjunctive and BM25
                         }
                     }else{//MaxScore
@@ -128,4 +145,38 @@ public class Tester {
             System.out.println("average query processing time: "+(total_time/num_query)/1000+" seconds");
         }
     }
+
+    /*
+    public static boolean compareLinkedLists(LinkedList<Map.Entry<Integer, Double>> list1,
+                                             LinkedList<Map.Entry<Integer, Double>> list2) {
+        // If the sizes are different, lists are definitely not equal
+        if (list1.size() != list2.size()) {
+            return false;
+        }
+
+        // Iterate through both lists simultaneously and compare elements
+        Iterator<Map.Entry<Integer, Double>> iter1 = list1.iterator();
+        Iterator<Map.Entry<Integer, Double>> iter2 = list2.iterator();
+
+        while (iter1.hasNext() && iter2.hasNext()) {
+            Map.Entry<Integer, Double> entry1 = iter1.next();
+            Map.Entry<Integer, Double> entry2 = iter2.next();
+
+            // Compare each entry in the lists
+            if (!entry1.getKey().equals(entry2.getKey()) || !entry1.getValue().equals(entry2.getValue())) {
+
+                if(!entry1.getValue().equals(entry2.getValue())){
+                    double diff=entry1.getValue()-entry2.getValue();
+                    if((diff>0 && diff<0.0005) || (diff<0 && diff>-0.0005))
+                        continue;
+                    else
+                        return false;
+                }
+                //se docid diverso
+                return false; // If any entry is different, lists are not equal
+            }
+        }
+
+        return true; // All entries are the same, lists are equal
+    }*/
 }
