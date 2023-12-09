@@ -238,7 +238,7 @@ public class LexiconEntry {
     public String toString() {
 
         return term + "\t" +
-                df + ":" + idf + ":" + termCollFreq + ":" + maxTf + ":" + maxTfidf + ":" + offsetIndexDocId + ":" + offsetIndexFreq + ":" +
+                df + ":" + idf + ":" + termCollFreq + ":" + maxTf + ":" + maxTfidf + ":" +maxBM25+":"+ offsetIndexDocId + ":" + offsetIndexFreq + ":" +
                 docIdSize + ":" + freqSize + ":"+descriptorOffset+":"+ numBlocks+ "\n";
     }
 

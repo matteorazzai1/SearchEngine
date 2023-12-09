@@ -69,17 +69,19 @@ public class MaxScore {
         //create array ub to store the upper bounds of the postingLists
         double[] ub=new double[index.size()];
 
+        //System.out.println(lexiconEntries.get(0).getMaxBM25());
+
         if(isBM25)
-            ub[0]= lexiconEntries.get(0).getMaxBM25(); //take the value with the lowest upper bound
+            ub[0]= (lexiconEntries.get(0).getMaxBM25()*processedQuery.get(lexiconEntries.get(0).getTerm())); //take the value with the lowest upper bound
         else
-            ub[0]= lexiconEntries.get(0).getMaxTfidf(); //take the value with the lowest upper bound
+            ub[0]= (lexiconEntries.get(0).getMaxTfidf()*processedQuery.get(lexiconEntries.get(0).getTerm())); //take the value with the lowest upper bound
 
         for (int i=1;i<lexiconEntries.size();i++) {
 
                 if(isBM25)
-                    ub[i]=ub[i-1]+lexiconEntries.get(i).getMaxTfidf();
+                    ub[i]=ub[i-1]+(lexiconEntries.get(i).getMaxBM25()*processedQuery.get(lexiconEntries.get(i).getTerm()));
                 else
-                    ub[i]=ub[i-1]+lexiconEntries.get(i).getMaxTfidf();;
+                    ub[i]=ub[i-1]+(lexiconEntries.get(i).getMaxTfidf()*processedQuery.get(lexiconEntries.get(i).getTerm()));
 
         }
 
