@@ -43,12 +43,13 @@ public class VariableByteCompressor {
             }
             return compressedValue;
         }
-
+/*
     /**
      * it returns the entire array of bytes of the compression of the array given as input
      * @param array of integer to be compressed
      * @return array of bytes of the compressed integers
      */
+/*
         public static byte[] compressArrayInt(int[] array){
 
             ArrayList<Byte> compressedArray=new ArrayList<>();
@@ -63,9 +64,9 @@ public class VariableByteCompressor {
                     compressedArrayByte[i]=compressedArray.get(i);
             }
             return compressedArrayByte;
-        }
+        }*/
 
-
+/*
     /**
      *  it takes the arrayCompressed vector with byte that represents some integers in VariableByte Encoding, and it
      *  returns the integer value
@@ -73,6 +74,7 @@ public class VariableByteCompressor {
      * @param numbers the number of integer to retrieve
      * @return the array of integer decompressed
      */
+/*
     public static int[] decompressArray(byte[] arrayCompressed, int numbers){
 
             int[] decompressedArray=new int[numbers];
@@ -113,9 +115,9 @@ public class VariableByteCompressor {
             decompressedArray[nextValue]=Integer.parseInt(String.valueOf(value),2);
 
             return decompressedArray;
-    }
+    }*/
 
-/*
+
     private static byte[] integerCompression(int number){
             if (number == 0) {
                 return new byte[]{0};
@@ -125,7 +127,7 @@ public class VariableByteCompressor {
 
             while (true) {
                 byteList.add((byte) ((number % 128)));
-                if (number <= 128) {
+                if (number < 128) {
                     break;
                 }
                 number /= 128;
@@ -143,15 +145,16 @@ public class VariableByteCompressor {
 
     }
     
-    public static byte[] compressIntArray(int[] array)  {
+    public static byte[] compressArrayInt(int[] array)  {
         ArrayList<Byte> compressedArray = new ArrayList<>();
 
 
         // For each element to be compressed
         for(int number: array){
             // Perform the compression and append the compressed output to the byte list
-            for(byte elem: integerCompression(number))
+            for(byte elem: integerCompression(number)) {
                 compressedArray.add(elem);
+            }
         }
 
         // Transform the arraylist to an array
@@ -162,28 +165,31 @@ public class VariableByteCompressor {
         return output;
     }
 
-    public static int[] decompressIntArray(byte[] compressedData, int n){
+    public static int[] decompressArray(byte[] compressedData, int numbers){
 
-        int[] decompressedArray = new int[n];
+        ArrayList<Integer> decompressedArray = new ArrayList<>();
 
         int i = 0;
-        int j = 0;
         int number = 0;
 
-        while (j < n) {
+        while (i<compressedData.length) {
             if (compressedData[i] >= 0) {
+                if(i>0){
+                    decompressedArray.add(number);
+                    number = 0;
+                }
                 number = 128 * number + compressedData[i];
+
             } else {
                 number = 128 * number + (compressedData[i] + 128);
-                decompressedArray[j] = number;
-                number = 0;
-                j++;
             }
             i++;
         }
+        decompressedArray.add(number); //the last values is not been added in the cycle for, so we add it here
 
-        return decompressedArray;
+        return decompressedArray.stream()
+                .mapToInt(Integer::intValue)
+                .toArray();
     }
-*/
 
 }
