@@ -31,7 +31,7 @@ public class MaxScore {
         ArrayList<LexiconEntry> lexiconEntries = new ArrayList<>();
 
         processedQuery.keySet().parallelStream().forEach(key -> {try {
-            LexiconEntry l = Lexicon.retrieveEntryFromDisk(key);
+            LexiconEntry l = LRUCache.retrieveLexEntry(key); //it retrieves the lexiconEntry from the cache if present or from the disk otherwise
             synchronized (lexiconEntries) {
                 lexiconEntries.add(l);
             }
@@ -60,7 +60,7 @@ public class MaxScore {
 
         lexiconEntries.parallelStream().forEachOrdered(l -> {
             try {
-                index.add(new PostingList(l.getTerm(), readSkippingBlocks(l.getDescriptorOffset(), blocksChannel).retrieveBlock()));
+                index.add(LRUCache.retrievePostingList(l, blocksChannel));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

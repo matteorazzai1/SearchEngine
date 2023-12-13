@@ -25,7 +25,7 @@ public class Ranking {
         ArrayList<LexiconEntry> lexiconEntries = new ArrayList<>();
 
         processedQuery.keySet().parallelStream().forEach(key -> {try {
-            LexiconEntry l = Lexicon.retrieveEntryFromDisk(key);
+            LexiconEntry l = LRUCache.retrieveLexEntry(key); //it retrieves the lexiconEntry from the cache if present or from the disk otherwise
             synchronized (lexiconEntries) {
                 lexiconEntries.add(l);
             }
@@ -42,7 +42,7 @@ public class Ranking {
         FileChannel blocks=(FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
         lexiconEntries.parallelStream().forEach(l -> {try {
-            PostingList p = new PostingList(l.getTerm(), readSkippingBlocks(l.getDescriptorOffset(), blocks).retrieveBlock());
+            PostingList p = LRUCache.retrievePostingList(l, blocks); //it retrieves the postingList from the cache if present or from the disk otherwise
             synchronized (index) {
                 index.add(p);
             }
@@ -141,7 +141,7 @@ public class Ranking {
 
 
         processedQuery.keySet().parallelStream().forEach(key -> {try {
-            LexiconEntry l = Lexicon.retrieveEntryFromDisk(key);
+            LexiconEntry l = LRUCache.retrieveLexEntry(key); //it retrieves the lexiconEntry from the cache if present or from the disk otherwise
             synchronized (lexiconEntries) {
                 lexiconEntries.add(l);
             }
@@ -150,7 +150,7 @@ public class Ranking {
         }});
 
         lexiconEntries.parallelStream().forEach(l -> {try {
-            PostingList p = new PostingList(l.getTerm(), readSkippingBlocks(l.getDescriptorOffset(), blocks).retrieveBlock());
+            PostingList p = LRUCache.retrievePostingList(l, blocks); //it retrieves the postingList from the cache if present or from the disk otherwise
             synchronized (index) {
                 index.add(p);
             }
@@ -243,7 +243,6 @@ public class Ranking {
 
         for (int i = block; i < numBlocks; i++) {
             if (nextBlockVal < nextDocId) {
-                //TODO (check) se siamo qui e per esempio block =0, significa che quello che sto cercando è in 1, perchè non leggo blocco (i+1)?
                 skippingBlock = readSkippingBlocks(descriptorOffset + ((long) (i+1) * SkippingBlock.getEntrySize()), blockChannel);
                 nextBlockVal = skippingBlock.getMaxDocId();
             } else {
@@ -264,7 +263,7 @@ public class Ranking {
 
 
     public static void main(String[] args) throws IOException {
-        String query = "ferrari lamborghini";
+        String query = "why do hunters pattern their shotguns?";
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
         docIndex.loadCollectionStats();
@@ -273,8 +272,8 @@ public class Ranking {
 
         long start = System.currentTimeMillis();
         String processedQuery = Preprocesser.processCLIQuery(query);
-        //System.out.println(MaxScore.maxScoreQuery(processedQuery, 5, true));
-        System.out.println(DAATConjunctive(processedQuery, 5, true));
+        System.out.println(MaxScore.maxScoreQuery(processedQuery, 5, true));
+        //System.out.println(DAATDisjunctive(processedQuery, 5, true));
         long finish = System.currentTimeMillis();
         long timeElapsed = finish - start;
         System.out.println("Time elapsed: " + timeElapsed);
