@@ -5,6 +5,8 @@ target/
 indexer/target/
 common/target/
 indexer/data/
+tester/data/
+tester/evaluation/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

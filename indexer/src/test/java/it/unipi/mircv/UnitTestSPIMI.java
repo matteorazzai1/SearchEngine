@@ -4,6 +4,7 @@ import it.unipi.mircv.baseStructure.InvertedIndex;
 import it.unipi.mircv.baseStructure.Posting;
 import it.unipi.mircv.baseStructure.PostingList;
 import static it.unipi.mircv.Constants.*;
+import static it.unipi.mircv.FileUtils.createBuffer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,7 +19,7 @@ public class UnitTestSPIMI {
     public static final String PATH_TO_TEST_COLLECTION = "src/test/data/collectionTest.tsv";
     //a SPIMI algorithm implementation for unit testing with some modifications
     public static Object[] performUnitTestSPIMI() throws IOException{
-        BufferedReader br = SPIMI.createBuffer(PATH_TO_TEST_COLLECTION, false);
+        BufferedReader br = createBuffer(PATH_TO_TEST_COLLECTION, false);
         String line;
         String[] docPIDTokens;
         String[] tokens;

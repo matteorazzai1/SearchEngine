@@ -1,9 +1,10 @@
 package it.unipi.mircv;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -94,5 +95,16 @@ public class FileUtils {
                 f.delete();
             }
         }
+    }
+
+    public static BufferedReader createBuffer(String path, boolean isCompressed) throws IOException {
+        if (isCompressed) {
+            TarArchiveInputStream tarInput = new TarArchiveInputStream
+                    (new GzipCompressorInputStream(new FileInputStream(path)));
+            tarInput.getNextTarEntry();
+            return new BufferedReader(new InputStreamReader(tarInput, StandardCharsets.UTF_8));
+        }
+        return Files.newBufferedReader(Paths.get(path), StandardCharsets.UTF_8);
+
     }
 }

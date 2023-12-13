@@ -260,4 +260,16 @@ public class LexiconEntry {
         }
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (!LexiconEntry.class.isAssignableFrom(obj.getClass())) {
+            return false;
+        }
+        final LexiconEntry other = (LexiconEntry) obj;
+        return this.term.equals(other.term);
+    }
+
 }

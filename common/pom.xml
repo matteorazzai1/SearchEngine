@@ -43,6 +43,12 @@
       <version>RELEASE</version>
       <scope>test</scope>
     </dependency>
+      <dependency>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-compress</artifactId>
+          <version>1.21</version>
+          <scope>compile</scope>
+      </dependency>
   </dependencies>
 
 </project>
