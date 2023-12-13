@@ -1,182 +1,155 @@
 package it.unipi.mircv;
-import it.unipi.mircv.baseStructure.DocumentIndex;
-import it.unipi.mircv.baseStructure.Lexicon;
-import it.unipi.mircv.baseStructure.LexiconEntry;
-import it.unipi.mircv.baseStructure.PostingList;
+import it.unipi.mircv.baseStructure.*;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
-import static it.unipi.mircv.SPIMI.createBuffer;
-import static it.unipi.mircv.Preprocesser.process;
-import static it.unipi.mircv.Constants.PATH_TO_QUERIES;
+import static it.unipi.mircv.Constants.*;
+import static it.unipi.mircv.FileUtils.createBuffer;
+import static it.unipi.mircv.MaxScore.maxScoreQuery;
+import static it.unipi.mircv.Preprocesser.*;
 import static it.unipi.mircv.Ranking.DAATDisjunctive;
 import static it.unipi.mircv.Ranking.DAATConjunctive;
+
 public class Tester {
+
+    private static final Scanner scanner = new Scanner(System.in);
+    private static BufferedReader br = null;
+    private static FileWriter evalChannel = null;
 
     public static void main(String[] args) throws IOException {
         System.out.println("The system is starting...");
-        String query_choice;
-        String disjunctive_type = "";
-        String ranking_type;
 
-        ArrayList<LexiconEntry> entries=new ArrayList<>();
-        LinkedList<PostingList> index = new LinkedList<>();
         DocumentIndex docIndex = DocumentIndex.getInstance();
         docIndex.loadCollectionStats();
         docIndex.readFromFile();
+        boolean isEvaluation;
+        String query;
+        String queryType;
+        String disjunctiveQueryType = null;
+        boolean isBM25;
+        int evaluation;
+        int numResults = 0;
 
-        //TODO operazioni di setup
-        while(true){
-            System.out.println("Select one of the following options: \n 1: Conjunctive query\n 2: Disjunctive query\n 3: exit");
-            Scanner sc = new Scanner(System.in);
-            query_choice=sc.nextLine();
-            if(Objects.equals(query_choice, "3"))
-                break;
-            else if(Objects.equals(query_choice, "1"))
-                System.out.println("Test of conjunctive queries");
-            else if(Objects.equals(query_choice, "2")) {
-                System.out.println("Test of disjunctive queries");
-                System.out.println("Select one of these options: \n1) execute DAATDisjunctive \n2) execute MaxScore");
-                do {
-                    sc = new Scanner(System.in);
-                    disjunctive_type = sc.nextLine();
-                }while (!disjunctive_type.equals("1") && !disjunctive_type.equals("2"));
-                if(disjunctive_type.equals("1"))
-                    System.out.println("You selected DAATDisjunctive");
-                else
-                    System.out.println("You selected MaxScore");
-            }
-            else {
-                System.out.println("Incorrect choice, insert a valid number");
-                continue;
-            }
-            System.out.println("Select one of these metrics: \n1) TFIDF \n2) BM25");
-            do {
-                sc = new Scanner(System.in);
-                ranking_type = sc.nextLine();
-            }while (!ranking_type.equals("1") && !ranking_type.equals("2"));
-            if(ranking_type.equals("1"))
-                System.out.println("You selected TFIDF");
-            else
-                System.out.println("You selected BM25");
-            String query;
-            String[] query_split;
-            int num_query=0;
-            ArrayList<Long> query_time = new ArrayList<>();
-            long total_time=0;
+        while (true) {
+            System.out.println("Welcome to the search engine!\n1. Free query\n2. Evaluate search engine");
+            evaluation = Integer.parseInt(scanner.nextLine());
+            isEvaluation = evaluation == 2;
 
-            BufferedReader br = createBuffer(PATH_TO_QUERIES, false);
-            query= br.readLine();
-
-
-            while(query!=null){
-                index.clear();
-                entries.clear();
-                query=process(query);
-                query_split=query.split("\t");
-                query=query_split[1];
-                //System.out.println("query: "+query);
-                for(String term : query.split(" ")){
-                    //System.out.println("term: "+term);
-                    PostingList post = new PostingList(term, PostingList.retrievePostingList(term));
-                    index.add(post);
-                    entries.add(Lexicon.retrieveEntryFromDisk(term));
+            if (isEvaluation) {
+                evalChannel = setupEvaluation();
+                numResults = 100;
+                docIndex.retrieveDocsNo();
+                try {
+                    br = createBuffer((PATH_TO_QUERIES), false);
+                    query = br.readLine();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-                long query_start = 0;
-                LinkedList<Map.Entry<Integer, Double>> results = null;
-                //LinkedList<Map.Entry<Integer, Double>> resultsM = null;
-                if(query_choice.equals("1")){//Conjunctive
-                    if(ranking_type.equals("1")){//TFIDF
-                        query_start=System.currentTimeMillis();
-                        //TODO execute conjunctive with TFIDF
-                    }else{//BM25
-                        query_start=System.currentTimeMillis();
-                        //TODO execute conjunctive with BM25
-                    }
-                }else{//Disjunctive
-                    if(disjunctive_type.equals("1")){//DAATDisjunctive
-                        if(ranking_type.equals("1")){//TFIDF
-                            query_start=System.currentTimeMillis();
-                            results = DAATDisjunctive( query,false, 5);
-                            //TODO execute disjunctive with DAATDisjunctive and TFIDF
-                        }else{//BM25
-                            query_start=System.currentTimeMillis();
-                            results = DAATDisjunctive( query,true, 5);
-                            /*System.out.println(query);
-
-
-                            resultsM = MaxScore.maxScoreQuery(query,5,true);
-
-
-
-                            if(!compareLinkedLists(results,resultsM)){
-                                System.out.println("ERRORE");
-
-                                System.out.println(resultsM);
-                                System.out.println(results);
-                            }*/
-                            //TODO execute conjunctive with DAATDisjunctive and BM25
-                        }
-                    }else{//MaxScore
-                        if(ranking_type.equals("1")){//TFIDF
-                            query_start=System.currentTimeMillis();
-                            //TODO execute disjunctive with MaxScore and TFIDF
-                        }else{//BM25
-                            query_start=System.currentTimeMillis();
-                            //TODO execute conjunctive with MaxScore and BM25
-                        }
-                    }
-                }
-                long query_end = System.currentTimeMillis();
-                System.out.println(results);
-                query_time.add(query_end-query_start);
-                num_query++;
-                query=br.readLine();
+            } else {
+                System.out.println("Insert a query: ");
+                query = scanner.nextLine().trim();
+                System.out.println("Select how many results you want to retrieve: ");
+                numResults = Integer.parseInt(scanner.nextLine().trim());
             }
 
-            for(Long time : query_time){
-                total_time+=time;
+            System.out.println("Select query type:\n1. Conjunctive query\n2. Disjunctive query");
+            queryType = scanner.nextLine().trim();
+
+            if(queryType.equals("2")){
+                System.out.println("Select the algorithm to run:\n1. DAAT\n2. MaxScore");
+                disjunctiveQueryType = scanner.nextLine().trim();
             }
 
+            System.out.println("Select ranking type:\n1. TFIDF\n2. BM25");
+            isBM25 = Integer.parseInt(scanner.nextLine().trim()) == 2;
 
-            System.out.println(num_query+" queries executed in "+total_time/1000+" seconds");
-            System.out.println("average query processing time: "+(total_time/num_query)/1000+" seconds");
+            processQueries(query, queryType, disjunctiveQueryType, isBM25, isEvaluation, numResults);
+
         }
     }
 
-    /*
-    public static boolean compareLinkedLists(LinkedList<Map.Entry<Integer, Double>> list1,
-                                             LinkedList<Map.Entry<Integer, Double>> list2) {
-        // If the sizes are different, lists are definitely not equal
-        if (list1.size() != list2.size()) {
-            return false;
+
+    private static FileWriter setupEvaluation() throws IOException {
+        if (!Files.exists(Path.of(PATH_TO_EVALUATION_RESULTS_FOLDER))) {
+            Files.createDirectory(Path.of(PATH_TO_EVALUATION_RESULTS_FOLDER));
+        } else {
+            FileUtils.clearFolder(PATH_TO_EVALUATION_RESULTS_FOLDER);
         }
+        return new FileWriter(PATH_TO_EVALUATION_RESULTS);
+    }
 
-        // Iterate through both lists simultaneously and compare elements
-        Iterator<Map.Entry<Integer, Double>> iter1 = list1.iterator();
-        Iterator<Map.Entry<Integer, Double>> iter2 = list2.iterator();
 
-        while (iter1.hasNext() && iter2.hasNext()) {
-            Map.Entry<Integer, Double> entry1 = iter1.next();
-            Map.Entry<Integer, Double> entry2 = iter2.next();
+    private static void processQueries(String query, String queryType, String disjunctiveQueryType, boolean isBM25, boolean isEvaluation, int numResults) throws IOException {
+        List<Long> queryTimes = new ArrayList<>();
+        long totalTime = 0;
+        List<Map.Entry<Integer, Double>> results;
 
-            // Compare each entry in the lists
-            if (!entry1.getKey().equals(entry2.getKey()) || !entry1.getValue().equals(entry2.getValue())) {
+        while (query != null && !query.isEmpty()) {
+            long queryStart = System.currentTimeMillis();
+            if(isEvaluation){
+                results = executeQuery(process(query).split("\t")[1] , queryType, disjunctiveQueryType, isBM25, numResults);
+            }
+            else {
+                results = executeQuery(processCLIQuery(query) , queryType, disjunctiveQueryType, isBM25, numResults);
+            }
 
-                if(!entry1.getValue().equals(entry2.getValue())){
-                    double diff=entry1.getValue()-entry2.getValue();
-                    if((diff>0 && diff<0.0005) || (diff<0 && diff>-0.0005))
-                        continue;
-                    else
-                        return false;
-                }
-                //se docid diverso
-                return false; // If any entry is different, lists are not equal
+            long queryEnd = System.currentTimeMillis();
+
+            if (isEvaluation) {
+                System.out.println("Processed query: " + query);
+                saveTrecEvalResults(query, results);
+                queryTimes.add(queryEnd - queryStart);
+                query = br.readLine();
+            } else {
+                System.out.println("\n" + results);
+                System.out.println("Time to execute the query: " + (queryEnd - queryStart) + " milliseconds\n");
+                System.out.println("Insert a new query or press enter to go back to the starting menu");
+                query = scanner.nextLine();
             }
         }
 
-        return true; // All entries are the same, lists are equal
-    }*/
-}
+        for (Long time : queryTimes) {
+            totalTime += time;
+        }
+
+        if (isEvaluation) {
+            System.out.println(queryTimes.size() + " queries executed in " + totalTime / 1000 + " seconds");
+            System.out.println("Average query processing time: " + (((float) totalTime / queryTimes.size())) / 1000 + " seconds");
+        }
+
+        br.close();
+        evalChannel.close();
+    }
+
+    private static List<Map.Entry<Integer, Double>> executeQuery(String query, String queryType, String disjunctiveQueryType, boolean isBM25, int numResults) throws IOException {
+        switch (queryType) {
+            case "1":
+                return DAATConjunctive(query, numResults, isBM25);
+            case "2":
+                if (disjunctiveQueryType.equals("1"))
+                    return DAATDisjunctive(query, numResults, isBM25);
+                else
+                    return maxScoreQuery(query, numResults, isBM25);
+            default:
+                return Collections.emptyList();
+        }
+    }
+
+    //TODO convert the docid to the docno
+    private static void saveTrecEvalResults(String s, List<Map.Entry<Integer, Double>> results) throws IOException {
+        int queryId = Integer.parseInt(s.split("\t")[0]);
+        int[] docNos = DocumentIndex.getInstance().getDocsNo();
+        for (int i=0; i<results.size(); i++) {
+            StringBuilder sBuilder = new StringBuilder(queryId + " Q0 ");
+            Map.Entry<Integer, Double> entry = results.get(i);
+            sBuilder.append("D").append(docNos[entry.getKey()-1]).append(" ").append(i+1).append(" ").append(entry.getValue()).append(" RUN_EVAL\n");
+            evalChannel.write(sBuilder.toString());
+        }
+    }
+    }
+

@@ -119,7 +119,6 @@ public class PostingList {
         }*/
 
         LexiconEntry lexEntry=Lexicon.retrieveEntryFromDisk(term);
-        System.out.println(lexEntry);
 
         byte[] docIdCompressed=new byte[lexEntry.getDocIdSize()];
         byte[] freqCompressed=new byte[lexEntry.getFreqSize()];
