@@ -1,5 +1,7 @@
 package it.unipi.mircv.compression;
 
+import java.util.ArrayList;
+
 public class UnaryCompressor {
 
     /**
@@ -18,11 +20,15 @@ public class UnaryCompressor {
 
         return unaryCode.toString();
     }
+
+    /*
     /**
      * it returns the entire array of bytes of the compression of the array given as input
      * @param array of integer to be compressed
      * @return array of bytes of the compressed integers
      */
+/*
+
     public static byte[] compressArrayInt(int[] array) {
 
         int nbits = 0;
@@ -58,9 +64,9 @@ public class UnaryCompressor {
         }
 
         return compressedArray;
-    }
+    }*/
 
-
+/*
     /**
      * it takes the arrayCompressed vector with byte that represents some integers in Unary Encoding, and it
      * returns the integer value
@@ -68,6 +74,8 @@ public class UnaryCompressor {
      * @param lengthArray the number of integer to retrieve
      * @return the array of integer decompressed
      */
+
+/*
     public static int[] decompressArrayInt(byte[] arrayCompressed,int lengthArray){
 
         int[] decompressedArray=new int[lengthArray];
@@ -97,5 +105,87 @@ public class UnaryCompressor {
         }
 
         return decompressedArray;
+    }*/
+
+
+    public static byte[] compressArrayInt(int[] data){
+        int nbits = 0;
+        for (int value:data){
+            nbits += value;
+        }
+        int nBytes=(nbits+7)/8;
+        byte[] compressedArray=new byte[nBytes];
+        int j = 0;
+        int numBit = 0;
+        int n = 0;
+        for(int i = 0; i < data.length;i++){
+            if(data[i] <= 0){
+                i++;
+                continue;
+            }
+
+            int value = data[i];
+            int nbitsValue = 0;
+
+            while (nbitsValue < value-1){
+                if (numBit == 8){
+                    compressedArray[j] = (byte) n;
+                    j++;
+                    numBit = 0;
+                    n = 0;
+                }
+                n = n << 1;
+                n = n | 1;
+                numBit++;
+                nbitsValue++;
+
+            }
+
+            if (numBit == 8){
+                compressedArray[j] = (byte) n;
+                j++;
+                numBit = 0;
+                n = 0;
+            }
+            n = n << 1;
+            numBit++;
+        }
+
+        if (j < nBytes){
+            n = n << (8 - numBit);
+            compressedArray[j] = (byte) n;
+        }
+
+        return compressedArray;
+    }
+
+    public static int[] decompressArrayInt(byte[] compressedData, int numbersToRead){
+        //int[] decompressedArray = new int[compressedData.length * 8];
+        ArrayList<Integer> decompressedArray = new ArrayList<>();
+        //int j = 0;
+        int k = 0;
+        int n = 1;
+        for(int i=0;i<compressedData.length;i++){
+            int value = compressedData[i];
+            while (k < 8 && decompressedArray.size() < numbersToRead){
+                if ((value & 128) == 128){
+                    n++;
+                }
+                else{
+                    //decompressedArray[j] = n;
+                    decompressedArray.add(n);
+                    //j++;
+                    n = 1;
+                }
+                value = value << 1;
+                k++;
+            }
+            k = 0;
+            //i++;
+        }
+        //if(n != 0){
+            //decompressedArray.add(n);
+        //}
+        return decompressedArray.stream().mapToInt(Integer::intValue).toArray();
     }
 }
