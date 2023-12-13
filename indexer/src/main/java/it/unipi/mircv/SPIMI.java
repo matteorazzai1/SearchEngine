@@ -18,6 +18,7 @@ import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
 import static it.unipi.mircv.Constants.*;
+import static it.unipi.mircv.FileUtils.createBuffer;
 import static it.unipi.mircv.Preprocesser.process;
 
 public class SPIMI {
@@ -153,15 +154,6 @@ public class SPIMI {
 
     }
 
-    public static BufferedReader createBuffer(String path, boolean isCompressed) throws IOException {
-        if (isCompressed) {
-            TarArchiveInputStream tarInput = new TarArchiveInputStream
-                    (new GzipCompressorInputStream(new FileInputStream(path)));
-            tarInput.getNextTarEntry();
-            return new BufferedReader(new InputStreamReader(tarInput, StandardCharsets.UTF_8));
-        }
-        return Files.newBufferedReader(Paths.get(path), StandardCharsets.UTF_8);
 
-    }
 
 }

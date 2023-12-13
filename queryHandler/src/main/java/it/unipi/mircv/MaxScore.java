@@ -24,19 +24,20 @@ public class MaxScore {
 
         HashMap<String, Integer> processedQuery = Utils.queryToDict(query);
 
-        ArrayList<LexiconEntry> lexiconEntries = new ArrayList<>();
-
-        for(Map.Entry<String, Integer> e:processedQuery.entrySet()){
-            //System.out.println(e);
-            String term=e.getKey();
-            LexiconEntry entry = Lexicon.retrieveEntryFromDisk(term);
-            lexiconEntries.add(entry);
-        }
-
-
         FileChannel blocksChannel=(FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
+
+        ArrayList<LexiconEntry> lexiconEntries = new ArrayList<>();
+
+        processedQuery.keySet().parallelStream().forEach(key -> {try {
+            LexiconEntry l = Lexicon.retrieveEntryFromDisk(key);
+            synchronized (lexiconEntries) {
+                lexiconEntries.add(l);
+            }
+        }catch (IOException e) {
+            e.printStackTrace();
+        }});
 
 
         //priority queue to store the k max scores in ascending order of score
