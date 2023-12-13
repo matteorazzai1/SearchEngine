@@ -42,7 +42,7 @@ public class Tester {
 
             if (isEvaluation) {
                 evalChannel = setupEvaluation();
-                numResults = 100;
+                numResults = 10;
                 docIndex.retrieveDocsNo();
                 try {
                     br = createBuffer((PATH_TO_QUERIES), false);
@@ -102,7 +102,7 @@ public class Tester {
 
             if (isEvaluation) {
                 System.out.println("Processed query: " + query);
-                saveTrecEvalResults(query, results);
+                saveTrecEvalResults(process(query), results);
                 queryTimes.add(queryEnd - queryStart);
                 query = br.readLine();
             } else {
@@ -140,14 +140,13 @@ public class Tester {
         }
     }
 
-    //TODO convert the docid to the docno
     private static void saveTrecEvalResults(String s, List<Map.Entry<Integer, Double>> results) throws IOException {
         int queryId = Integer.parseInt(s.split("\t")[0]);
         int[] docNos = DocumentIndex.getInstance().getDocsNo();
         for (int i=0; i<results.size(); i++) {
             StringBuilder sBuilder = new StringBuilder(queryId + " Q0 ");
             Map.Entry<Integer, Double> entry = results.get(i);
-            sBuilder.append("D").append(docNos[entry.getKey()-1]).append(" ").append(i+1).append(" ").append(entry.getValue()).append(" RUN_EVAL\n");
+            sBuilder.append(docNos[entry.getKey()-1]).append(" ").append(i+1).append(" ").append(entry.getValue()).append(" STANDARD\n");
             evalChannel.write(sBuilder.toString());
         }
     }
