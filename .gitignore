@@ -5,6 +5,9 @@ target/
 indexer/target/
 common/target/
 indexer/data/
+tester/data/
+tester/evaluation/
+trec_eval
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

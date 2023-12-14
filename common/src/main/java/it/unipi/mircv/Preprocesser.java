@@ -74,7 +74,8 @@ public class Preprocesser {
         String termsString = "";
         for(String term : terms){
             termsString += term + " ";    }
-        return termsString;}
+        return termsString;
+    }
 
     public static String process(String row) {
         List<String>terms = parse(row);

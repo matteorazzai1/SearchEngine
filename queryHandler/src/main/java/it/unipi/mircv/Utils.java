@@ -1,11 +1,15 @@
 package it.unipi.mircv;
 import it.unipi.mircv.baseStructure.DocumentIndex;
 import it.unipi.mircv.baseStructure.PostingList;
+import it.unipi.mircv.baseStructure.SkippingBlock;
 
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.util.*;
 
 import static it.unipi.mircv.Constants.b;
 import static it.unipi.mircv.Constants.k1;
+import static it.unipi.mircv.baseStructure.SkippingBlock.readSkippingBlocks;
 import static java.lang.Math.log10;
 
 public class Utils {
@@ -31,6 +35,22 @@ public class Utils {
             }
         }
         return minID;
+    }
+
+    public static AbstractMap.SimpleEntry<Integer, Integer> moveToNext(PostingList p, int position,
+                                                                       int block, int numBlocks, long descriptorOffset, FileChannel blockChannel) throws IOException {
+
+        if(position + 1 < p.getPostingsLength()){
+            return new AbstractMap.SimpleEntry<>(position + 1, block);
+        }
+        else if(block + 1 < numBlocks){
+            p.rewritePostings(readSkippingBlocks(descriptorOffset + ((long) (block + 1) * SkippingBlock.getEntrySize()), blockChannel).retrieveBlock());
+            return new AbstractMap.SimpleEntry<>(0, block + 1);
+        }
+        else{
+            return null;
+        }
+
     }
 
 

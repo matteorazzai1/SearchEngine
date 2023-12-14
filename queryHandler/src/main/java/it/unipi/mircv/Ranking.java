@@ -19,19 +19,19 @@ public class Ranking {
 
     //index is fine as a list, since we do not need to access a specific entry, while the lexicon entry is needed as
     //Map because we need the IDF of a specific term
-    public static LinkedList<Map.Entry<Integer, Double>> DAATDisjunctive(String query, boolean isBM25, int k) throws IOException {
+    public static LinkedList<Map.Entry<Integer, Double>> DAATDisjunctive(String query, int k, boolean isBM25) throws IOException {
         HashMap<String, Integer> processedQuery = queryToDict(query);
         PriorityQueue<Map.Entry<Integer, Double>> finalScores = new PriorityQueue<>(k, Map.Entry.comparingByValue());
-
         ArrayList<LexiconEntry> lexiconEntries = new ArrayList<>();
 
-        for(Map.Entry<String, Integer> e:processedQuery.entrySet()){
-            //System.out.println(e);
-            String term=e.getKey();
-            LexiconEntry entry = Lexicon.retrieveEntryFromDisk(term);
-            lexiconEntries.add(entry);
-        }
-
+        processedQuery.keySet().parallelStream().forEach(key -> {try {
+            LexiconEntry l = LRUCache.retrieveLexEntry(key); //it retrieves the lexiconEntry from the cache if present or from the disk otherwise
+            synchronized (lexiconEntries) {
+                lexiconEntries.add(l);
+            }
+        }catch (IOException e) {
+            e.printStackTrace();
+        }});
 
         Map<String, AbstractMap.SimpleEntry<Integer, Integer>> positions = processedQuery.keySet().stream()
                 .collect(Collectors.toMap(key -> key, key -> new AbstractMap.SimpleEntry<>(0, 0))); //couple which indicates position in the block and numBlock
@@ -42,7 +42,7 @@ public class Ranking {
         FileChannel blocks=(FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
         lexiconEntries.parallelStream().forEach(l -> {try {
-            PostingList p = new PostingList(l.getTerm(), readSkippingBlocks(l.getDescriptorOffset(), blocks).retrieveBlock());
+            PostingList p = LRUCache.retrievePostingList(l, blocks); //it retrieves the postingList from the cache if present or from the disk otherwise
             synchronized (index) {
                 index.add(p);
             }
@@ -81,6 +81,7 @@ public class Ranking {
 
                 Posting postingEntry = p.getPostings().get(positionBlockHolder.getKey());
                 if (postingEntry.getDocId() == nextDocId) {
+
                     scoreAccumulator += scoringFunction(
                             isBM25,
                             processedQuery.get(p.getTerm()),
@@ -90,9 +91,7 @@ public class Ranking {
                     );
 
                     //fastest way to move forward by one, since I may need to go in the next block, so I use nextDocId+1
-                    positionBlockHolder = nextGEQ(p, nextDocId + 1, termPositions.getKey(),
-                            termPositions.getValue(), descriptorOffset, numBlocks, blocks);
-
+                    positionBlockHolder = moveToNext(p, positionBlockHolder.getKey(), positionBlockHolder.getValue(), numBlocks, descriptorOffset, blocks);
 
                     if (positionBlockHolder == null) {
                         index.remove(j);
@@ -126,7 +125,7 @@ public class Ranking {
         return output;
     }
 
-    public static LinkedList DAATConjunctive(ArrayList<LexiconEntry> lexiconEntries, String query, boolean isBM25, int k) throws IOException {
+    public static LinkedList<Map.Entry<Integer, Double>> DAATConjunctive(String query, int k, boolean isBM25) throws IOException {
         HashMap<String, Integer> processedQuery = queryToDict(query);
         PriorityQueue<Map.Entry<Integer, Double>> finalScores = new PriorityQueue<>(k, Map.Entry.comparingByValue());
 
@@ -136,10 +135,22 @@ public class Ranking {
         DocumentIndex docIndex = DocumentIndex.getInstance();
         ArrayList<PostingList> index = new ArrayList<>();
 
+        ArrayList<LexiconEntry> lexiconEntries = new ArrayList<>();
+
         FileChannel blocks=(FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
+
+        processedQuery.keySet().parallelStream().forEach(key -> {try {
+            LexiconEntry l = LRUCache.retrieveLexEntry(key); //it retrieves the lexiconEntry from the cache if present or from the disk otherwise
+            synchronized (lexiconEntries) {
+                lexiconEntries.add(l);
+            }
+        }catch (IOException e) {
+            e.printStackTrace();
+        }});
+
         lexiconEntries.parallelStream().forEach(l -> {try {
-            PostingList p = new PostingList(l.getTerm(), readSkippingBlocks(l.getDescriptorOffset(), blocks).retrieveBlock());
+            PostingList p = LRUCache.retrievePostingList(l, blocks); //it retrieves the postingList from the cache if present or from the disk otherwise
             synchronized (index) {
                 index.add(p);
             }
@@ -155,7 +166,7 @@ public class Ranking {
         double scoreAccumulator;
         boolean toCompute;
         AbstractMap.SimpleEntry<Integer, Integer> positionBlockHolder;
-        PostingList p;
+        PostingList p = null;
 
 
 
@@ -201,12 +212,13 @@ public class Ranking {
                 }
             }
 
-            //i have to go on the next position of the shortest posting list, so i use nextDocID+1 and call nextGEQ, if we get null we're at the end of the posting list
-            positionBlockHolder = nextGEQ(shortestPosting, nextDocId + 1, positions.get(shortestPosting.getTerm()).getKey(),
-                    positions.get(shortestPosting.getTerm()).getValue(), shortestLexiconEntry.getDescriptorOffset(), shortestLexiconEntry.getNumBlocks(), blocks);
+
+            positionBlockHolder = moveToNext(shortestPosting, positions.get(shortestLexiconEntry.getTerm()).getKey(),
+                    positions.get(shortestLexiconEntry.getTerm()).getValue(), shortestLexiconEntry.getNumBlocks(), shortestLexiconEntry.getDescriptorOffset(), blocks);
             if (positionBlockHolder == null) {
                 break;
             }
+            positions.put(shortestLexiconEntry.getTerm(), new AbstractMap.SimpleEntry<>(positionBlockHolder.getKey(), positionBlockHolder.getValue()));
             nextDocId = shortestPosting.getPostings().get(positionBlockHolder.getKey()).getDocId();
         }
 
@@ -231,8 +243,7 @@ public class Ranking {
 
         for (int i = block; i < numBlocks; i++) {
             if (nextBlockVal < nextDocId) {
-                //TODO (check) se siamo qui e per esempio block =0, significa che quello che sto cercando è in 1, perchè non leggo blocco (i+1)?
-                skippingBlock = readSkippingBlocks(descriptorOffset + (long) (i+1) * SkippingBlock.getEntrySize(), blockChannel);
+                skippingBlock = readSkippingBlocks(descriptorOffset + ((long) (i+1) * SkippingBlock.getEntrySize()), blockChannel);
                 nextBlockVal = skippingBlock.getMaxDocId();
             } else {
                 if (i != block) {
@@ -252,22 +263,17 @@ public class Ranking {
 
 
     public static void main(String[] args) throws IOException {
-        //ArrayList<LexiconEntry> entries = new ArrayList();
-        String query = "counti new york new york";
+        String query = "why do hunters pattern their shotguns?";
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
         docIndex.loadCollectionStats();
         docIndex.readFromFile();
-        //LexiconEntry entry;
+
 
         long start = System.currentTimeMillis();
         String processedQuery = Preprocesser.processCLIQuery(query);
-        /*for(String term : processedQuery.split(" ")){
-            entry = Lexicon.retrieveEntryFromDisk(term);
-            entries.add(entry);
-        }*/
         System.out.println(MaxScore.maxScoreQuery(processedQuery, 5, true));
-        System.out.println(DAATDisjunctive(processedQuery, true, 5));
+        //System.out.println(DAATDisjunctive(processedQuery, 5, true));
         long finish = System.currentTimeMillis();
         long timeElapsed = finish - start;
         System.out.println("Time elapsed: " + timeElapsed);
