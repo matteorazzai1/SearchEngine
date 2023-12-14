@@ -18,19 +18,19 @@ import static it.unipi.mircv.Constants.*;
 
 public class SkippingBlock {
 
-    private int maxDocId;
+    private int maxDocId; //max docId of the block
 
-    private long offsetDocId;
+    private long offsetDocId; //offset of the block inside the docId inverted index file
 
-    private int docIdSize;
+    private int docIdSize;  //size of the block inside the docId inverted index file
 
-    private long offsetFreq;
+    private long offsetFreq; //offset of the block inside the freq inverted index file
 
-    private int freqSize;
+    private int freqSize; //size of the block inside the freq inverted index file
 
-    private int numPostings;
+    private int numPostings; //number of postings inside the block
 
-    private static final int BLOCK_ENTRY_SIZE= 4+8+4+8+4+4;
+    private static final int BLOCK_ENTRY_SIZE= 4+8+4+8+4+4; //size of a single block descriptor
 
     @Override
     public String toString() {
@@ -109,8 +109,8 @@ public class SkippingBlock {
 
     /**
      * write a single blockDescriptor on file
-     * @param positionBlock
-     * @return
+     * @param positionBlock position on the file where we have to write the block
+     * @return the position from which we have to write the next block on the file
      * @throws IOException
      */
     public long writeSkippingBlock(long positionBlock, FileChannel blocks) throws IOException {
@@ -132,8 +132,8 @@ public class SkippingBlock {
     }
 
     /**
-     * read single block from file
-     * @param positionBlock position of the block inside the file
+     * read single block from block file
+     * @param positionBlock position of the block inside the file where we have to read
      * @throws IOException
      */
     public static SkippingBlock readSkippingBlocks(long positionBlock, FileChannel blocks) throws IOException {
@@ -152,8 +152,8 @@ public class SkippingBlock {
     }
 
     /**
-     * retrieve the postings of the block
-     * @return the list of posting of the block
+     * retrieve the postings of the block from the inverted index files
+     * @return the postingList contained in the block
      * @throws IOException
      */
     public ArrayList<Posting> retrieveBlock() throws IOException {
@@ -196,6 +196,10 @@ public class SkippingBlock {
         return blockPostingList;
     }
 
+    /**
+     * write on debug file the block descriptor
+     * @param term term related to the block
+     */
     public void writeDebugSkippingBlock(String term) {
 
         try {

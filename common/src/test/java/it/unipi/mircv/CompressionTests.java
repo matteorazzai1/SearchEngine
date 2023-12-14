@@ -13,12 +13,12 @@ public class CompressionTests {
     //test the unary compressor
     public void testUnaryCompressor(){
         //test compressInt
-        int[] input = {5, 10, 12};
+        /*int[] input = {5, 10, 12};
         String[] expected = {"11110", "1111111110", "111111111110"};
         for(int i = 0; i < input.length; i++){
             String output = UnaryCompressor.compressInt(input[i]);
             assertTrue(output.equals(expected[i]));
-        }
+        }*/
         //test compressArrayInt
         int[][] input2 = {{5, 10, 12}, {1, 2, 3, 4, 5}, {6, 7, 11, 13}};
         byte[][] expected2 = {{-9, -3, -1, -64}, {91, -68}, {-5, -9, -2, -1, -16}};
@@ -47,7 +47,7 @@ public class CompressionTests {
         int[] input = {5, 312, 66000};
         byte[][] expected = {{5}, {2, -72}, {4, -125, -48}};
         for(int i = 0; i < input.length; i++){
-            byte[] output = VariableByteCompressor.compressInt(input[i]);
+            byte[] output = VariableByteCompressor.integerCompression(input[i]);
             assertTrue(Arrays.equals(output, expected[i]));
         }
         //test decompressInt

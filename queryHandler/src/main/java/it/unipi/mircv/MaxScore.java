@@ -19,7 +19,14 @@ public class MaxScore {
 
 
 
-
+    /**
+     * This method returns the k documents with the highest score for a given query with the maxScore algorithm
+     * @param query the query that we have to process
+     * @param k the number of couple [document,score] to return
+     * @param isBM25 if true it uses BM25 as scoring function, otherwise it uses TfIdf
+     * @return the list of k documents with the highest score
+     * @throws IOException
+     */
     public static LinkedList<Map.Entry<Integer, Double>> maxScoreQuery(String query, int k, boolean isBM25) throws IOException {
 
         HashMap<String, Integer> processedQuery = Utils.queryToDict(query);
@@ -70,7 +77,6 @@ public class MaxScore {
         //create array ub to store the upper bounds of the postingLists
         double[] ub=new double[index.size()];
 
-        //System.out.println(lexiconEntries.get(0).getMaxBM25());
 
         if(isBM25)
             ub[0]= (lexiconEntries.get(0).getMaxBM25()*processedQuery.get(lexiconEntries.get(0).getTerm())); //take the value with the lowest upper bound
@@ -197,18 +203,16 @@ public class MaxScore {
             }
 
             //-----------LIST PIVOT UPDATE----------
-            //if the queue does not have k elements or the partialScore calculated is greater than the worst score in the queue in ascending order of score
-            //it means that we have to add it to the priority queue
-            //System.out.println("currentDocId: "+currentDocId+" score: "+partialScore);
+            //if the queue does not have k elements, that means that we have to add it to the priority queue
             if(incMaxScoreQueue.size()<k) {
                     incMaxScoreQueue.offer(new java.util.AbstractMap.SimpleEntry<>(currentDocId,partialScore));
             }
             else {
+                //the partialScore calculated is greater than the worst score in the queue in ascending order of score, so we have to add it to the priority queue
                 if( incMaxScoreQueue.peek().getValue()<partialScore) {
                     incMaxScoreQueue.poll();
 
                     incMaxScoreQueue.offer(new java.util.AbstractMap.SimpleEntry<>(currentDocId, partialScore));
-                    //System.out.println("currentDocId: "+currentDocId+" score: "+partialScore);
 
                 }
 
@@ -216,7 +220,6 @@ public class MaxScore {
 
                 while(pivot<index.size() && ub[pivot]<=threshold){
                     pivot=pivot+1;
-                    //System.out.println("pivot: "+pivot);
                 }
             }
 
@@ -228,7 +231,6 @@ public class MaxScore {
             }
 
             currentDocId=nextDocId;
-            //System.out.println("currentDocId: "+currentDocId);
 
         }
         LinkedList<Map.Entry<Integer, Double>> maxScoreQueue = new LinkedList<>();
@@ -238,25 +240,19 @@ public class MaxScore {
         return maxScoreQueue;
     }
 
+    /**
+     * This method checks if all the postingLists have been read completely
+     * @param positions is the map that we have to check,it contains for each postingList the term as key and a couple which indicates position in the block and numBlock
+     * @return true if all the postingLists have been read completely, false otherwise
+     */
     private static boolean checkReadingPostingLists(Map<String, AbstractMap.SimpleEntry<Integer, Integer>> positions) {
         for(Map.Entry<String, AbstractMap.SimpleEntry<Integer, Integer>> e:positions.entrySet()){
             if(e.getValue().getKey()!=-1)
+                //if at least one postingList has position set to -1, it means that it has been read completely
                 return false;
         }
         return true;
     }
 
-    private static int retrieveSmallestDocId(ArrayList<PostingList> sortedPostingLists) {
-        int minDocId = Integer.MAX_VALUE;
-
-        for (PostingList p : sortedPostingLists) {
-                int docId=p.getPostings().get(0).getDocId(); //first docId of the postingList
-
-                if(docId<minDocId)
-                    minDocId=docId;
-        }
-
-        return minDocId;
-    }
 
 }

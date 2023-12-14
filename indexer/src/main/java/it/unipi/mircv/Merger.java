@@ -37,7 +37,7 @@ public class Merger
     private static final int numIntermediateIndexes = new File(PATH_TO_INTERMEDIATE_INDEX_FOLDER).list().length;
 
     /**
-     * It accesses to all the file related to intermediateInvertedIndex at the same time
+     * It accesses to all the file related to intermediateInvertedIndex created in SPIMI and merge them into the final invertedIndex
      * @param isDebugging flag to determine if we're debugging or not
      * @throws IOException
      */
@@ -62,8 +62,6 @@ public class Merger
         for(int i = 1; i <= numIntermediateIndexes; i++){
             filePaths.add(PATH_TO_INTERMEDIATE_INDEX+i+".txt");
         }
-
-
 
 
         //open file channels
@@ -141,7 +139,11 @@ public class Merger
         freqsChannel.close(); // Close the writer to save changes
     }
 
-
+    /**
+     * this function finds the min term between all the posting lists of the same line of the intermediateIndexes
+     * @param map is the map of the posting lists, containing the reader of each intermediateIndex file associated to the last posting list read from that intermediateIndex
+     * @return the min term found
+     */
     public static String findMinTerm(HashMap<BufferedReader, PostingList> map) {
         String minTerm = null;
 
@@ -155,15 +157,13 @@ public class Merger
         return minTerm;
     }
 
-
-
     /**
-     * this function makes two operations:
-     *              (i) takes the LinkedHashMap of the finalIndex and wrote it on two different files, one for the DocId of the posting lists,
-     *                  and one for the Freq of the posting lists.
-     *              (ii) add the offsets within the invertedIndex files from which the posting lists of the specific term start
-     * @param finalPostingList
+     * this function saves the posting list merged and the lexiconEntry for a certain term on disk
+     * @param finalPostingList is the posting list to be saved
+     * @param isDebugging flag to determine if we're debugging or not, in this way we can save the posting list and the lexiconEntry on a debug file (written in not compressed mode)
+     * @throws IOException
      */
+
     private static void saveMergedIndex(PostingList finalPostingList, boolean isDebugging) throws IOException {
 
             LexiconEntry lexEntry = new LexiconEntry(finalPostingList.getTerm());
@@ -272,17 +272,19 @@ public class Merger
 
 
             if (isDebugging) {
-                //System.out.println("Debugging mode");
                 saveMergedIndexDebugging(finalPostingList, lexEntry);
             } else {
-                //System.out.println("Not in debugging mode");
                 if (lexEntry != null)
                     positionTerm = lexEntry.writeLexiconEntry(positionTerm, lexiconChannel);
             }
-            //System.out.println("Data has been written to " + path);
 
     }
 
+    /**
+     * this function saves the posting list merged and the lexiconEntry for a certain term in debug mode
+     * @param finalIndex is the posting list to be saved
+     * @param finalLexicon is the lexiconEntry to be saved
+     */
     private static void saveMergedIndexDebugging(PostingList finalIndex, LexiconEntry finalLexicon) {
 
 
