@@ -165,7 +165,7 @@ public class VariableByteCompressor {
         return output;
     }
 
-    public static int[] decompressArray(byte[] compressedData, int numbers){
+    public static int[] decompressArray(byte[] compressedData){
 
         ArrayList<Integer> decompressedArray = new ArrayList<>();
 

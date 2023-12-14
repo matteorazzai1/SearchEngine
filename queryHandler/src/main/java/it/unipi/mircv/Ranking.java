@@ -39,13 +39,12 @@ public class Ranking {
         DocumentIndex docIndex = DocumentIndex.getInstance();
         ArrayList<PostingList> index = new ArrayList<>();
 
-        FileChannel blocks=(FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+        FileChannel blocks = (FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
-        lexiconEntries.parallelStream().forEach(l -> {try {
-            PostingList p = LRUCache.retrievePostingList(l, blocks); //it retrieves the postingList from the cache if present or from the disk otherwise
-            synchronized (index) {
-                index.add(p);
-            }
+        lexiconEntries.sort(Comparator.comparing(LexiconEntry::getTerm));
+
+        lexiconEntries.parallelStream().forEachOrdered(l -> {try {
+            index.add(new PostingList(LRUCache.retrievePostingList(l, blocks)));
         }catch (IOException e) {
             e.printStackTrace();
         }});
@@ -56,9 +55,6 @@ public class Ranking {
         PostingList p;
         long descriptorOffset;
         int numBlocks;
-
-        lexiconEntries.sort(Comparator.comparing(LexiconEntry::getTerm));
-        index.sort(Comparator.comparing(PostingList::getTerm));
 
         while(nextDocId != Integer.MAX_VALUE){
             scoreAccumulator = 0;
@@ -119,6 +115,7 @@ public class Ranking {
             nextDocId = minDocID(index, positions);
 
         }
+
         LinkedList<Map.Entry<Integer, Double>> output = new LinkedList<>(finalScores);
         output.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
         blocks.close();
@@ -149,17 +146,16 @@ public class Ranking {
             e.printStackTrace();
         }});
 
-        lexiconEntries.parallelStream().forEach(l -> {try {
-            PostingList p = LRUCache.retrievePostingList(l, blocks); //it retrieves the postingList from the cache if present or from the disk otherwise
-            synchronized (index) {
-                index.add(p);
-            }
+        lexiconEntries.sort(Comparator.comparing(LexiconEntry::getDf));
+
+        lexiconEntries.parallelStream().forEachOrdered(l -> {try {
+            index.add(new PostingList(LRUCache.retrievePostingList(l, blocks)));
         }catch (IOException e) {
             e.printStackTrace();
         }});
 
-        lexiconEntries.sort(Comparator.comparing(LexiconEntry::getDf));
-        index.sort(Comparator.comparing(PostingList::getPostingsLength));
+
+
         PostingList shortestPosting = index.get(0);
         LexiconEntry shortestLexiconEntry = lexiconEntries.get(0);
         int nextDocId = shortestPosting.getPostings().get(0).getDocId();
@@ -263,7 +259,7 @@ public class Ranking {
 
 
     public static void main(String[] args) throws IOException {
-        String query = "why do hunters pattern their shotguns?";
+        String query = "ferrari lamborghini";
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
         docIndex.loadCollectionStats();
@@ -272,8 +268,8 @@ public class Ranking {
 
         long start = System.currentTimeMillis();
         String processedQuery = Preprocesser.processCLIQuery(query);
-        System.out.println(MaxScore.maxScoreQuery(processedQuery, 5, true));
-        //System.out.println(DAATDisjunctive(processedQuery, 5, true));
+        //System.out.println(MaxScore.maxScoreQuery(processedQuery, 5, true));
+        System.out.println(DAATDisjunctive(processedQuery, 5, true));
         long finish = System.currentTimeMillis();
         long timeElapsed = finish - start;
         System.out.println("Time elapsed: " + timeElapsed);

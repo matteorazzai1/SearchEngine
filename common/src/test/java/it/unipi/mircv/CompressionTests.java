@@ -64,7 +64,7 @@ public class CompressionTests {
         int[][] expected3 = {{5, 312, 66000}, {129, 32770}};
         int[] lengths = {3, 2};
         for(int i = 0; i < input3.length; i++){
-            int[] output = VariableByteCompressor.decompressArray(input3[i], expected3[i].length);
+            int[] output = VariableByteCompressor.decompressArray(input3[i]);
             for(int j = 0; j < output.length; j++){
                 assertTrue(output[j] == expected3[i][j]);
             }

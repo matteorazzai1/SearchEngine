@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static it.unipi.mircv.Constants.*;
 import static it.unipi.mircv.FileUtils.createBuffer;
@@ -27,13 +28,14 @@ public class Tester {
         DocumentIndex docIndex = DocumentIndex.getInstance();
         docIndex.loadCollectionStats();
         docIndex.readFromFile();
+        docIndex.retrieveDocsNo();
         boolean isEvaluation;
         String query;
         String queryType;
         String disjunctiveQueryType = null;
         boolean isBM25;
         int evaluation;
-        int numResults = 0;
+        int numResults;
 
         while (true) {
             System.out.println("Welcome to the search engine!\n1. Free query\n2. Evaluate search engine");
@@ -42,8 +44,7 @@ public class Tester {
 
             if (isEvaluation) {
                 evalChannel = setupEvaluation();
-                numResults = 10;
-                docIndex.retrieveDocsNo();
+                numResults = 100;
                 try {
                     br = createBuffer((PATH_TO_QUERIES), false);
                     query = br.readLine();
@@ -95,7 +96,13 @@ public class Tester {
                 results = executeQuery(process(query).split("\t")[1] , queryType, disjunctiveQueryType, isBM25, numResults);
             }
             else {
+                List<Map.Entry<Integer, Double>> results2 = new LinkedList<>();
                 results = executeQuery(processCLIQuery(query) , queryType, disjunctiveQueryType, isBM25, numResults);
+                results = results.parallelStream()
+                        .map(entry -> new AbstractMap.SimpleEntry<>(
+                                DocumentIndex.getInstance().getDocsNo()[entry.getKey() - 1],
+                                entry.getValue()))
+                        .collect(Collectors.toList());
             }
 
             long queryEnd = System.currentTimeMillis();
@@ -120,10 +127,11 @@ public class Tester {
         if (isEvaluation) {
             System.out.println(queryTimes.size() + " queries executed in " + totalTime / 1000 + " seconds");
             System.out.println("Average query processing time: " + (((float) totalTime / queryTimes.size())) / 1000 + " seconds");
+            br.close();
+            evalChannel.close();
         }
 
-        br.close();
-        evalChannel.close();
+
     }
 
     private static List<Map.Entry<Integer, Double>> executeQuery(String query, String queryType, String disjunctiveQueryType, boolean isBM25, int numResults) throws IOException {
