@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 
 import static it.unipi.mircv.Constants.INV_INDEX_DOCID;
 import static it.unipi.mircv.Constants.INV_INDEX_FREQS;
@@ -21,6 +20,9 @@ public class PostingList {
     public String term;
 
     private ArrayList<Posting> postings = new ArrayList<>();
+
+    public PostingList() {
+    }
 
     public PostingList(Posting p) {
         postings.add(p);
@@ -54,6 +56,12 @@ public class PostingList {
     public PostingList(String term, ArrayList<Posting> postings){
             this.term=term;
             this.postings=postings;
+    }
+
+    public PostingList(PostingList p){
+        this.term = p.term;
+        this.postings = new ArrayList<>(p.postings.size());
+        this.postings.addAll(p.postings);
     }
 
     public String getTerm() {
@@ -140,7 +148,7 @@ public class PostingList {
         bufferDocId.get(docIdCompressed);
         bufferFreq.get(freqCompressed);
 
-        int[] docIdDecompressed= VariableByteCompressor.decompressArray(docIdCompressed,lexEntry.getDf());
+        int[] docIdDecompressed= VariableByteCompressor.decompressArray(docIdCompressed);
         int[] freqDecompressed= UnaryCompressor.decompressArrayInt(freqCompressed, lexEntry.getDf());
 
         //we have to fuse them to obtain the inital postingList

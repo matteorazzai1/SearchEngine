@@ -46,4 +46,12 @@ public class LRUCache {
         postingCacheEntries.clear();
     }
 
+    public static LruCache<String, LexiconEntry> getLexCacheEntries() {
+        return lexCacheEntries;
+    }
+
+    public static LruCache<String, PostingList> getPostingCacheEntries() {
+        return postingCacheEntries;
+    }
+
 }

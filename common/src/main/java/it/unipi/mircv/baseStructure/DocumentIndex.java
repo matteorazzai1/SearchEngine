@@ -3,11 +3,9 @@ package it.unipi.mircv.baseStructure;
 import it.unipi.mircv.FileUtils;
 import it.unipi.mircv.compression.VariableByteCompressor;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -80,7 +78,7 @@ public class DocumentIndex {
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
 
-            instance.docsLen = VariableByteCompressor.decompressArray(bytes, instance.collectionSize);
+            instance.docsLen = VariableByteCompressor.decompressArray(bytes);
             docIndexChannel.close();
         } catch (IOException e) {
             System.out.println("Cannot read the DocIndex");
@@ -115,7 +113,7 @@ public class DocumentIndex {
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
 
-            instance.docsNo = VariableByteCompressor.decompressArray(bytes, instance.collectionSize);
+            instance.docsNo = VariableByteCompressor.decompressArray(bytes);
             docNoChannel.close();
         } catch (IOException e) {
             System.out.println("Cannot read the DocIndex");

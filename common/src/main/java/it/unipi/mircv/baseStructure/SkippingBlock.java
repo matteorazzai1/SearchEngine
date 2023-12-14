@@ -183,7 +183,7 @@ public class SkippingBlock {
         bufferDoc.get(compressedDocIds,0,docIdSize);
         bufferFreq.get(compressedFreq,0,freqSize);
 
-        int[] decompressedArrayDocId= VariableByteCompressor.decompressArray(compressedDocIds,numPostings);
+        int[] decompressedArrayDocId= VariableByteCompressor.decompressArray(compressedDocIds);
         int[] decompressedArrayFreq= UnaryCompressor.decompressArrayInt(compressedFreq,numPostings);
 
         for(int i=0;i<numPostings;i++){
