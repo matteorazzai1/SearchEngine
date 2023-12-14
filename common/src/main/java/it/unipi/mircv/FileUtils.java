@@ -13,6 +13,10 @@ import java.nio.file.StandardOpenOption;
 import static it.unipi.mircv.Constants.*;
 
 public class FileUtils {
+
+    /**
+     * function to clear the debug files
+     */
     public static void clearDebugFiles(){
         try {
             File file = new File(INV_INDEX_DEBUG);
@@ -41,38 +45,31 @@ public class FileUtils {
         }
     }
 
-
+    /**
+     * function to retrieve the size of a file
+     * @param Path of the file to retrieve the size
+     * @return the size of the file
+     */
     public static Long retrieveFileSize(String Path) {
         File file = new File(Path);
 
         long fileSizeInBytes = 0;
 
         if (file.exists()) {
+            //file exists
             fileSizeInBytes = file.length();
-            //System.out.println("File size in bytes: " + fileSizeInBytes);
         } else {
-            //System.out.println("File does not exist");
+            //file does not exist
             fileSizeInBytes= Long.parseLong(null);
         }
         return fileSizeInBytes;
     }
 
-    public static void appendFile(String pathSource,String pathDest){
 
-        Path sourcePath = Paths.get(pathSource);
-        Path destinationPath = Paths.get(pathDest);
-
-        try {
-
-            byte[] data = Files.readAllBytes(sourcePath);
-            Files.write(destinationPath, data, StandardOpenOption.APPEND);
-
-            //System.out.println("Content of " + pathSource + " appended to " + pathDest + " successfully!");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
+    /**
+     * function to clear a file
+     * @param path of the file to clear
+     */
     public static void clearFile(String path){
         try {
             File file = new File(path);
@@ -87,6 +84,10 @@ public class FileUtils {
         }
     }
 
+    /**
+     * function to clear a folder
+     * @param pathToIntermediateIndexFolder of the folder to clear
+     */
     public static void clearFolder(String pathToIntermediateIndexFolder) {
         File folder = new File(pathToIntermediateIndexFolder);
         File[] files = folder.listFiles();
@@ -97,6 +98,13 @@ public class FileUtils {
         }
     }
 
+    /**
+     * function to create a buffer to read a file, in case it is compressed or not
+     * @param path of the file to create the buffer
+     * @param isCompressed boolean to check if the file is compressed
+     * @return the buffer
+     * @throws IOException
+     */
     public static BufferedReader createBuffer(String path, boolean isCompressed) throws IOException {
         if (isCompressed) {
             TarArchiveInputStream tarInput = new TarArchiveInputStream

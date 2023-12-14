@@ -28,6 +28,10 @@ public class PostingList {
         postings.add(p);
     }
 
+    /**
+     * This constructor is used to create the posting list from a line of the intermediate index file
+     * @param line is the line of the intermediate index file
+     */
     public PostingList(String line){
 
         String[] parts = line.split("\t");
@@ -85,12 +89,20 @@ public class PostingList {
         return postingList.toString();
     }
 
+    /**
+     * This method is used to merge the posting list of the intermediate index, in order to create the final posting list
+     * @param intermediatePostingList is the posting list of the intermediate index for a specific term
+     */
     public void appendList(PostingList intermediatePostingList) {
             //here we have to add the posting keeping the sorting in base of the docId
         this.postings.addAll(intermediatePostingList.postings);
         this.postings.sort(Comparator.comparing(Posting::getDocId));
     }
 
+    /**
+     * This method updates the frequency of the posting list for a specific document during SPIMI
+     * @param docID is the document id of the posting that we want to update in the posting list
+     */
     public void updatePosting(int docID){
         if (postings.get(postings.size() - 1).getDocId() == docID)
         {
@@ -107,58 +119,6 @@ public class PostingList {
 
     public void rewritePostings(ArrayList<Posting> newPostings) {
         this.postings = newPostings;
-    }
-
-    public static ArrayList<Posting> retrievePostingList(String term) throws IOException {
-
-        //retrieve lexicon from disk
-        /*Lexicon lexicon=new Lexicon(); //this function retrieve the lexicon directly from disk
-        System.out.println("lexicon recuperato");
-
-        LexiconEntry lexEntry=lexicon.getLexicon().get(term);
-        System.out.println(lexEntry);
-
-        if(lexEntry==null){
-                System.out.println("'"+term+"' not present");
-                return null;
-        }
-        else{
-            System.out.println("termine trovato");
-        }*/
-
-        LexiconEntry lexEntry=Lexicon.retrieveEntryFromDisk(term);
-
-        byte[] docIdCompressed=new byte[lexEntry.getDocIdSize()];
-        byte[] freqCompressed=new byte[lexEntry.getFreqSize()];
-        
-
-        FileChannel docIdFC=(FileChannel) Files.newByteChannel(Paths.get(INV_INDEX_DOCID),
-                StandardOpenOption.WRITE,
-                StandardOpenOption.READ,
-                StandardOpenOption.CREATE);
-
-        FileChannel freqFC=(FileChannel) Files.newByteChannel(Paths.get(INV_INDEX_FREQS),
-                StandardOpenOption.WRITE,
-                StandardOpenOption.READ,
-                StandardOpenOption.CREATE);
-
-        MappedByteBuffer bufferDocId=docIdFC.map(FileChannel.MapMode.READ_WRITE, lexEntry.getOffsetIndexDocId(), lexEntry.getDocIdSize());
-        MappedByteBuffer bufferFreq=freqFC.map(FileChannel.MapMode.READ_WRITE, lexEntry.getOffsetIndexFreq(), lexEntry.getFreqSize());
-
-        bufferDocId.get(docIdCompressed);
-        bufferFreq.get(freqCompressed);
-
-        int[] docIdDecompressed= VariableByteCompressor.decompressArray(docIdCompressed);
-        int[] freqDecompressed= UnaryCompressor.decompressArrayInt(freqCompressed, lexEntry.getDf());
-
-        //we have to fuse them to obtain the inital postingList
-
-        ArrayList<Posting> postingTermQuery=new ArrayList<>();
-
-        for(int i=0;i< lexEntry.getDf();i++){
-            postingTermQuery.add(new Posting(docIdDecompressed[i],freqDecompressed[i]));
-        }
-        return postingTermQuery;
     }
 
     public int getPostingsLength() {
