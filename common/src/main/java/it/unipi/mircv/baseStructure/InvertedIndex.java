@@ -5,6 +5,8 @@ import java.util.HashMap;
 public class InvertedIndex {
 
     private static InvertedIndex instance;
+
+    //Collection of PostingList to process
     private HashMap<String, PostingList> PostingLists;
 
     private InvertedIndex(){

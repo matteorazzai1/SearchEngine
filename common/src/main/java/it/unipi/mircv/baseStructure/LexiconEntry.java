@@ -12,32 +12,29 @@ import static it.unipi.mircv.Constants.b;
 import static it.unipi.mircv.Constants.k1;
 
 public class LexiconEntry {
-        private String term;
+        private String term; //term of the lexicon
         private int df=0;  //document frequency of the term
         private double idf=0; //inverse document frequency of the term
         private int termCollFreq =0; //frequency of the term inside the collection
 
         private int maxTf=0;   //max term freq inside a doc
-        private double maxTfidf=0; //tfidf related to the maxTdf of the term
+        private double maxTfidf=0; //tfidf related to the maxTf of the term
   
         private double maxBM25=0; //maximum bm25 score of the term
-        private long offsetIndexDocId=0;  //offset in the docId file of the inverted index
-        private long offsetIndexFreq=0; //offset in the frequency file of the inverted index
+        private long offsetIndexDocId=0;  //entry offset in the docId file of the inverted index
+        private long offsetIndexFreq=0; //entry offset in the frequency file of the inverted index
 
         private int docIdSize=0; //size of the term posting list in the docId file of the Inverted index
         private int freqSize=0;  //size of the term posting list in the freq file of the Inverted index
 
         private long descriptorOffset=0; //starting position of the blockDescriptor into the file
-        private int numBlocks=1; //number of blocks to split the list into
+        private int numBlocks=1; //number of blocks to split the list into, obviously we have at least one
 
-        public static final long ENTRY_SIZE_LEXICON = 64+(4+8+4+4+8+8+8+8+4+4+8+4); //64 byte for the term, 4 for int values and 8 for double and long
+        //64 byte for the term, 4 for int values and 8 for double and long
+        public static final long ENTRY_SIZE_LEXICON = 64+(4+8+4+4+8+8+8+8+4+4+8+4);
 
 
 
-    /**
-     * Constructor of the LexiconEntry
-     *
-     */
     public LexiconEntry(String term){
         this.term=term;
     }
@@ -189,7 +186,7 @@ public class LexiconEntry {
     }
 
     /**
-     * read from disk the entry of the lexicon
+     * Read from disk the entry of the lexicon
      * @param positionTerm the position of the term inside the lexicon
      * @param lexiconFC the file channel from which to read the lexicon
      * @return the lexiconEntry

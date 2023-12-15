@@ -109,58 +109,6 @@ public class PostingList {
         this.postings = newPostings;
     }
 
-    public static ArrayList<Posting> retrievePostingList(String term) throws IOException {
-
-        //retrieve lexicon from disk
-        /*Lexicon lexicon=new Lexicon(); //this function retrieve the lexicon directly from disk
-        System.out.println("lexicon recuperato");
-
-        LexiconEntry lexEntry=lexicon.getLexicon().get(term);
-        System.out.println(lexEntry);
-
-        if(lexEntry==null){
-                System.out.println("'"+term+"' not present");
-                return null;
-        }
-        else{
-            System.out.println("termine trovato");
-        }*/
-
-        LexiconEntry lexEntry=Lexicon.retrieveEntryFromDisk(term);
-
-        byte[] docIdCompressed=new byte[lexEntry.getDocIdSize()];
-        byte[] freqCompressed=new byte[lexEntry.getFreqSize()];
-        
-
-        FileChannel docIdFC=(FileChannel) Files.newByteChannel(Paths.get(INV_INDEX_DOCID),
-                StandardOpenOption.WRITE,
-                StandardOpenOption.READ,
-                StandardOpenOption.CREATE);
-
-        FileChannel freqFC=(FileChannel) Files.newByteChannel(Paths.get(INV_INDEX_FREQS),
-                StandardOpenOption.WRITE,
-                StandardOpenOption.READ,
-                StandardOpenOption.CREATE);
-
-        MappedByteBuffer bufferDocId=docIdFC.map(FileChannel.MapMode.READ_WRITE, lexEntry.getOffsetIndexDocId(), lexEntry.getDocIdSize());
-        MappedByteBuffer bufferFreq=freqFC.map(FileChannel.MapMode.READ_WRITE, lexEntry.getOffsetIndexFreq(), lexEntry.getFreqSize());
-
-        bufferDocId.get(docIdCompressed);
-        bufferFreq.get(freqCompressed);
-
-        int[] docIdDecompressed= VariableByteCompressor.decompressArray(docIdCompressed);
-        int[] freqDecompressed= UnaryCompressor.decompressArrayInt(freqCompressed, lexEntry.getDf());
-
-        //we have to fuse them to obtain the inital postingList
-
-        ArrayList<Posting> postingTermQuery=new ArrayList<>();
-
-        for(int i=0;i< lexEntry.getDf();i++){
-            postingTermQuery.add(new Posting(docIdDecompressed[i],freqDecompressed[i]));
-        }
-        return postingTermQuery;
-    }
-
     public int getPostingsLength() {
         return this.getPostings().size();
     }

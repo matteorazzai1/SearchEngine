@@ -14,6 +14,7 @@ import static it.unipi.mircv.baseStructure.LexiconEntry.ENTRY_SIZE_LEXICON;
 
 public class Lexicon {
 
+    //The collection of LexiconEntries
     public HashMap<String, LexiconEntry> lexicon;
 
     public HashMap<String, LexiconEntry> getLexicon() {
@@ -28,31 +29,9 @@ public class Lexicon {
         lexicon.put(term, le);
     }
 
-    /**
-     * costructor of lexicon reading it from disk
-     */
-    /*public Lexicon() throws IOException {
-
-        this.lexicon=new HashMap<>();
-
-        FileChannel lexiconFC=(FileChannel) Files.newByteChannel(Paths.get(LEXICON_PATH),
-                StandardOpenOption.WRITE,
-                StandardOpenOption.READ,
-                StandardOpenOption.CREATE);
-
-        for(int i=0;i<lexiconFC.size()-ENTRY_SIZE_LEXICON;i+= ENTRY_SIZE_LEXICON){ //TODO correct this, i put in this way because the last line of the lexicon was empty
-                    //System.out.println(i);
-                    LexiconEntry lexEntry=LexiconEntry.readLexEntryFromDisk(i,lexiconFC);
-                    //System.out.println(lexEntry.getTerm());
-                    this.lexicon.put(lexEntry.getTerm(),lexEntry);
-                    //System.out.println(this.lexicon);
-        }
-        lexiconFC.close();
-        //System.out.println("lexicon chiuso");
-    }*/
 
     /**
-     * binary search on lexicon file to find the entry of the term
+     * Binary search on lexicon file to find the entry of the term
      * @param term which we are searching the entry in lexicon
      * @return the lexiconEntry of the term passed to the function
      */
@@ -91,7 +70,9 @@ public class Lexicon {
                 return null;
             }
 
-            positionTerm = ((midSize / ENTRY_SIZE_LEXICON)) * ENTRY_SIZE_LEXICON; //it takes the quotient integer of the division, and it multiplies fo ENTRY_SIZE_LEXICON to find the starting point of the position of the term
+            //it takes the quotient integer of the division, and it multiplies fo ENTRY_SIZE_LEXICON
+            // to find the starting point of the position of the term
+            positionTerm = ((midSize / ENTRY_SIZE_LEXICON)) * ENTRY_SIZE_LEXICON;
 
 
             lexEntry = LexiconEntry.readLexEntryFromDisk(positionTerm, lexiconFC);

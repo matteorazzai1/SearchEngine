@@ -16,9 +16,16 @@ import static it.unipi.mircv.Constants.*;
 public class DocumentIndex {
     private static DocumentIndex instance;
 
+    //documents <pid>
     private int[] docsNo;
+
+    //length of documents
     private int[] docsLen;
+
+    //average length of documents
     private double AVDL;
+
+    //number of documents in the collection
     private int collectionSize;
 
 
@@ -64,6 +71,10 @@ public class DocumentIndex {
     }
 
 
+    /**
+     * Reads the docIndex from file
+     * @throws IOException if the file cannot be read
+     */
     public void readFromFile() throws IOException {
 
         instance.docsLen = new int[instance.getCollectionSize()];
@@ -86,18 +97,31 @@ public class DocumentIndex {
 
     }
 
+    /**
+     * Saves the collection stats using the Preferences API
+     * @throws IOException if the file cannot be written
+     */
     public void saveCollectionStats(Double AVDL, int collectionSize) {
         Preferences prefs = Preferences.userNodeForPackage(DocumentIndex.class);
         prefs.put("AVDL", String.valueOf(AVDL));
         prefs.put("collectionSize", String.valueOf(collectionSize));
     }
 
+    /**
+     * Loads the collection stats using the Preferences API
+     * @throws IOException if the file cannot be read
+     */
     public void loadCollectionStats() {
         Preferences prefs = Preferences.userNodeForPackage(DocumentIndex.class);
         this.setAVDL(Double.parseDouble(prefs.get("AVDL", "")));
         this.setCollectionSize(Integer.parseInt(prefs.get("collectionSize", "")));
     }
 
+
+    /**
+     * Reads the docNo from file
+     * @throws IOException if the file cannot be read
+     */
     public void retrieveDocsNo() throws IOException {
 
         instance.docsNo = new int[instance.getCollectionSize()];
@@ -107,7 +131,7 @@ public class DocumentIndex {
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
         try {
-
+            //opens the channel to the file
             MappedByteBuffer buffer=docNoChannel.map(FileChannel.MapMode.READ_WRITE,0, FileUtils.retrieveFileSize(PATH_TO_FINAL_DOCNO+ ".txt"));
 
             byte[] bytes = new byte[buffer.remaining()];

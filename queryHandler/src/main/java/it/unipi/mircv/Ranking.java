@@ -17,13 +17,21 @@ import static it.unipi.mircv.baseStructure.SkippingBlock.readSkippingBlocks;
 
 public class Ranking {
 
-    //index is fine as a list, since we do not need to access a specific entry, while the lexicon entry is needed as
-    //Map because we need the IDF of a specific term
+    /**
+     * Function to perform a disjunctive query using the DAAT algorithm
+     * @param query the preprocessed query to perform
+     * @param k the number of results to return
+     * @param isBM25 wether to use BM25 or not
+     * @return a list of the k best results
+     * @throws IOException if there is an error in reading the block file
+     */
     public static LinkedList<Map.Entry<Integer, Double>> DAATDisjunctive(String query, int k, boolean isBM25) throws IOException {
+        //variable initialization and transforming the query into a dictionary with the terms and their frequencies
         HashMap<String, Integer> processedQuery = queryToDict(query);
         PriorityQueue<Map.Entry<Integer, Double>> finalScores = new PriorityQueue<>(k, Map.Entry.comparingByValue());
         ArrayList<LexiconEntry> lexiconEntries = new ArrayList<>();
 
+        //retrieving in parallel the lexicon entries from the disk or from the cache
         processedQuery.keySet().parallelStream().forEach(key -> {try {
             LexiconEntry l = LRUCache.retrieveLexEntry(key); //it retrieves the lexiconEntry from the cache if present or from the disk otherwise
             synchronized (lexiconEntries) {
@@ -38,17 +46,19 @@ public class Ranking {
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
         ArrayList<PostingList> index = new ArrayList<>();
-
         FileChannel blocks = (FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
+        //sorting the lexicon entries by term in order to have the same order of the postings in the index
         lexiconEntries.sort(Comparator.comparing(LexiconEntry::getTerm));
 
+        //retrieving in parallel the posting lists from the disk or from the cache, keeping the same order of the lexicon entries
         lexiconEntries.parallelStream().forEachOrdered(l -> {try {
             index.add(new PostingList(LRUCache.retrievePostingList(l, blocks)));
         }catch (IOException e) {
             e.printStackTrace();
         }});
 
+        //retrieving the minimum docID among the posting lists
         int nextDocId = minDocID(index, positions);
         double scoreAccumulator;
         AbstractMap.SimpleEntry<Integer, Integer> positionBlockHolder;
@@ -56,6 +66,7 @@ public class Ranking {
         long descriptorOffset;
         int numBlocks;
 
+        //iterate until we have processed all the posting lists, which happens when we have a docID equal to Integer.MAX_VALUE
         while(nextDocId != Integer.MAX_VALUE){
             scoreAccumulator = 0;
             for (int j = 0; j < index.size(); ) {
@@ -65,16 +76,19 @@ public class Ranking {
                 descriptorOffset = lexiconEntries.get(j).getDescriptorOffset();
                 numBlocks = lexiconEntries.get(j).getNumBlocks();
 
+                //we move the pointer to the next docID greater or equal than the nextDocId
                 positionBlockHolder = nextGEQ(p, nextDocId, termPositions.getKey(),
                 termPositions.getValue(), descriptorOffset, numBlocks, blocks);
 
-
+                //if we get null from nextGEQ, it means that we have finished processing the posting list, so we remove it
+                //since it will not give any other result
                 if (positionBlockHolder == null) {
                     index.remove(j);
                     lexiconEntries.remove(j);
                     continue;
                 }
 
+                //we add the score of the current posting to the accumulator only if the docID is equal to the nextDocId
                 Posting postingEntry = p.getPostings().get(positionBlockHolder.getKey());
                 if (postingEntry.getDocId() == nextDocId) {
 
@@ -86,9 +100,10 @@ public class Ranking {
                             docIndex.getDocsLen()[nextDocId - 1]
                     );
 
-                    //fastest way to move forward by one, since I may need to go in the next block, so I use nextDocId+1
+                    //if we found minDocId, we move the pointer to the next posting so that we don't process it again
                     positionBlockHolder = moveToNext(p, positionBlockHolder.getKey(), positionBlockHolder.getValue(), numBlocks, descriptorOffset, blocks);
 
+                    //again, if we get null from moveToNext, it means that we have finished processing the posting list, so we remove it
                     if (positionBlockHolder == null) {
                         index.remove(j);
                         lexiconEntries.remove(j);
@@ -96,6 +111,7 @@ public class Ranking {
                     }
 
                 }
+                //save the new position and block of the posting list
                 positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(positionBlockHolder.getKey(), positionBlockHolder.getValue()));
                 //we update here since we may have removed an element
                 j++;
@@ -112,6 +128,7 @@ public class Ranking {
                 finalScores.add(new AbstractMap.SimpleEntry<>(nextDocId, scoreAccumulator));
 
             }
+            //update nextDocId
             nextDocId = minDocID(index, positions);
 
         }
@@ -122,7 +139,16 @@ public class Ranking {
         return output;
     }
 
+    /**
+     * Function to perform a disjunctive query using the DAAT algorithm
+     * @param query the preprocessed query to perform
+     * @param k the number of results to return
+     * @param isBM25 wether to use BM25 or not
+     * @return a list of the k best results
+     * @throws IOException if there is an error in reading the block file
+     */
     public static LinkedList<Map.Entry<Integer, Double>> DAATConjunctive(String query, int k, boolean isBM25) throws IOException {
+        //variable initialization and transforming the query into a dictionary with the terms and their frequencies
         HashMap<String, Integer> processedQuery = queryToDict(query);
         PriorityQueue<Map.Entry<Integer, Double>> finalScores = new PriorityQueue<>(k, Map.Entry.comparingByValue());
 
@@ -136,7 +162,7 @@ public class Ranking {
 
         FileChannel blocks=(FileChannel) Files.newByteChannel(Paths.get(BLOCK_PATH), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
-
+        //retrieving in parallel the lexicon entries from the disk or from the cache
         processedQuery.keySet().parallelStream().forEach(key -> {try {
             LexiconEntry l = LRUCache.retrieveLexEntry(key); //it retrieves the lexiconEntry from the cache if present or from the disk otherwise
             synchronized (lexiconEntries) {
@@ -146,16 +172,17 @@ public class Ranking {
             e.printStackTrace();
         }});
 
+        //sorting the lexicon entries by document frequency, so the term having the shortest posting list will be the first
         lexiconEntries.sort(Comparator.comparing(LexiconEntry::getDf));
 
+        //retrieving in parallel the posting lists from the disk or from the cache, keeping the same order of the lexicon entries
         lexiconEntries.parallelStream().forEachOrdered(l -> {try {
             index.add(new PostingList(LRUCache.retrievePostingList(l, blocks)));
         }catch (IOException e) {
             e.printStackTrace();
         }});
 
-
-
+        //saving the shortest posting list in order to process the conjunctive query faster
         PostingList shortestPosting = index.get(0);
         LexiconEntry shortestLexiconEntry = lexiconEntries.get(0);
         int nextDocId = shortestPosting.getPostings().get(0).getDocId();
@@ -167,6 +194,8 @@ public class Ranking {
 
 
         while(true){
+            //we iterate over all the posting lists to check if the docID is present in all of them, this flag
+            //is used to specify whether we have to compute the score or not
             toCompute = true;
             for(int j=1; j<index.size(); j++){
                 p = index.get(j);
@@ -185,12 +214,14 @@ public class Ranking {
 
                 positions.put(p.getTerm(), new AbstractMap.SimpleEntry<>(positionBlockHolder.getKey(), positionBlockHolder.getValue()));
 
+                //if the docID is not present in one of the posting lists, we can stop processing it
                 if (p.getPostings().get(positionBlockHolder.getKey()).getDocId() != nextDocId){
                     toCompute = false;
                     break;
                 }
         }
 
+            //if the docID is present in all the posting lists, we compute the score and update the finalScores
             if(toCompute){
                 scoreAccumulator = 0;
                 for (int l=0; l<index.size(); l++){
@@ -208,7 +239,8 @@ public class Ranking {
                 }
             }
 
-
+            //we move the pointer to the next posting of the shortest posting list,
+            // if we get null it means that we have finished processing it
             positionBlockHolder = moveToNext(shortestPosting, positions.get(shortestLexiconEntry.getTerm()).getKey(),
                     positions.get(shortestLexiconEntry.getTerm()).getValue(), shortestLexiconEntry.getNumBlocks(), shortestLexiconEntry.getDescriptorOffset(), blocks);
             if (positionBlockHolder == null) {
@@ -224,28 +256,48 @@ public class Ranking {
         return output;
     }
 
+
+    /**
+     * Function to perform the nextGEQ operation on a posting list, in order to move the pointer to
+     * the next docID greater or equal than the one passed as parameter
+     * @param p the posting list to move
+     * @param nextDocId the docID to move to
+     * @param position the current position of the posting list
+     * @param block the current block of the posting list
+     * @param descriptorOffset the offset of the first descriptor block for the posting list
+     * @param numBlocks the number of blocks in which the entire posting list is split
+     * @param blockChannel the channel to the block file
+     * @return the new position and block of the posting list
+     * @throws IOException if there is an error in reading the block file
+     */
     public static AbstractMap.SimpleEntry<Integer, Integer> nextGEQ(PostingList p, int nextDocId, int position,
                                                                     int block, long descriptorOffset, int numBlocks,
                                                                     FileChannel blockChannel) throws IOException {
-        // Variable initialization
+        //variable initialization
         int currentId;
         int nextBlockVal = p.getPostings().get(p.getPostingsLength()-1).getDocId();
         SkippingBlock skippingBlock = new SkippingBlock();
 
-        // Check if the entire posting list has been processed
+        //check if the entire posting list has been processed, return null in case
         if (block == numBlocks) {
             return null;
         }
 
+        //iterate over all the blocks until we find the one where the nextDocId could be
         for (int i = block; i < numBlocks; i++) {
+            //if the nextDocId couldn't be in the current block, we move to the next one
             if (nextBlockVal < nextDocId) {
                 skippingBlock = readSkippingBlocks(descriptorOffset + ((long) (i+1) * SkippingBlock.getEntrySize()), blockChannel);
                 nextBlockVal = skippingBlock.getMaxDocId();
             } else {
+                //if the nextDocId could be in the current block, we iterate over the postings until we find
+                // it, or we find a docID greater than the nextDocId
                 if (i != block) {
+                    //if we changed block, we overwrite the posting list with the one we just read
                     p.rewritePostings(skippingBlock.retrieveBlock());
                 }
                 int startPos = (i == block) ? position : 0;
+                //we return the position of the first docID greater or equal than the nextDocId
                 for (int j = startPos; j < p.getPostingsLength(); j++) {
                     currentId = p.getPostings().get(j).getDocId();
                     if (currentId >= nextDocId) {
@@ -254,24 +306,8 @@ public class Ranking {
                 }
             }
         }
+        //nextDocID cannot be inside the posting list, so we can stop processing it
         return null;
     }
 
-
-    public static void main(String[] args) throws IOException {
-        String query = "ferrari lamborghini";
-
-        DocumentIndex docIndex = DocumentIndex.getInstance();
-        docIndex.loadCollectionStats();
-        docIndex.readFromFile();
-
-
-        long start = System.currentTimeMillis();
-        String processedQuery = Preprocesser.processCLIQuery(query);
-        //System.out.println(MaxScore.maxScoreQuery(processedQuery, 5, true));
-        System.out.println(DAATDisjunctive(processedQuery, 5, true));
-        long finish = System.currentTimeMillis();
-        long timeElapsed = finish - start;
-        System.out.println("Time elapsed: " + timeElapsed);
-    }
 }
