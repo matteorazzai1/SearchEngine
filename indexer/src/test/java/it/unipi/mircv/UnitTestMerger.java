@@ -9,149 +9,99 @@ import java.util.*;
 
 
 public class UnitTestMerger {
-    private static FileChannel docIdChannel = null;
-    private static FileChannel freqsChannel = null;
-
+    //a test version of the merger
     public static Object[] performUnitTestMerger(ArrayList<String> filePaths, int[] docLens) throws IOException {
-        ArrayList<ArrayList<int[]>> index = new ArrayList<>();
-        Lexicon lexicon = new Lexicon();
-        HashMap<String, LexiconEntry> lexiconMap = new HashMap<>();
-        /*docIdChannel = (FileChannel) Files.newByteChannel(Paths.get("indexer/test/data/inv_index_docId_test.txt"),
-                StandardOpenOption.WRITE,
-                StandardOpenOption.READ,
-                StandardOpenOption.CREATE);
+        ArrayList<ArrayList<int[]>> index = new ArrayList<>(); //arraylist for the final index
+        Lexicon lexicon = new Lexicon(); //final lexicon
+        HashMap<String, LexiconEntry> lexiconMap = new HashMap<>(); //hashmap for the final lexicon
 
-        freqsChannel = (FileChannel) Files.newByteChannel(Paths.get("indexer/test/data/inv_index_freq_test.txt"),
-                StandardOpenOption.WRITE,
-                StandardOpenOption.READ,
-                StandardOpenOption.CREATE);*/
+        HashMap<BufferedReader, PostingList> readerLines = new HashMap<>(); //hashmap for the buffered readers
 
-        HashMap<BufferedReader, PostingList> readerLines = new HashMap<>();
-
-        for (String filePath : filePaths) {
-            BufferedReader reader = new BufferedReader(new FileReader(filePath));
-            String line = reader.readLine();
-            if (line != null) {
-                readerLines.put(reader, new PostingList(line));
+        for (String filePath : filePaths) { //for each file path
+            BufferedReader reader = new BufferedReader(new FileReader(filePath)); //create a buffered reader
+            String line = reader.readLine(); //read a line
+            if (line != null) { //if the line is not null
+                readerLines.put(reader, new PostingList(line)); //put the buffered reader and a new posting list in the hashmap
             }
         }
 
-        while (!readerLines.isEmpty()) {
-            String minTerm = findMinTermTest(readerLines);
-            PostingList minPosting = new PostingList(minTerm, new ArrayList<>());
+        while (!readerLines.isEmpty()) { //while the hashmap is not empty
+            String minTerm = findMinTermTest(readerLines); //find the minimum term
+            PostingList minPosting = new PostingList(minTerm, new ArrayList<>()); //create a new posting list with the minimum term
+            //create an iterator to iterate over the hashmap
             Iterator<Map.Entry<BufferedReader, PostingList>> iterator = readerLines.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<BufferedReader, PostingList> entry = iterator.next();
-                PostingList postingList = entry.getValue();
-                if(postingList.getTerm().equals(minTerm)) {
-                    minPosting.appendList(postingList);
-                    BufferedReader reader = entry.getKey();
-                    String line = reader.readLine();
-                    if (line != null) {
-                        //System.out.println("line: "+line);
-                        readerLines.put(reader, new PostingList(line));
-                    } else {
-                        iterator.remove();
+            while (iterator.hasNext()) { //while the iterator has a next element
+                Map.Entry<BufferedReader, PostingList> entry = iterator.next(); //get the next element
+                PostingList postingList = entry.getValue(); //get the posting list
+                if(postingList.getTerm().equals(minTerm)) { //if the posting list term is equal to the minimum term
+                    minPosting.appendList(postingList); //append the posting list to the posting list of the minimum term
+                    BufferedReader reader = entry.getKey(); //get the buffered reader
+                    String line = reader.readLine(); //read a line from the buffered reader
+                    if (line != null) { //if the line is not null
+                        readerLines.put(reader, new PostingList(line)); //put the buffered reader and a new posting list in the hashmap
+                    } else { //if the line is null
+                        iterator.remove(); //remove the buffered reader from the hashmap
                     }
                 }
             }
-            index.add((ArrayList<int[]>) SaveMergedIndexTest(minPosting, docLens)[0]);
-            lexiconMap.put(minTerm, (LexiconEntry) SaveMergedIndexTest(minPosting, docLens)[1]);
+            Object[] results = SaveMergedIndexTest(minPosting, docLens); //save the results of the merged index
+            index.add((ArrayList<int[]>) results[0]); //save the merged index
+            lexiconMap.put(minTerm, (LexiconEntry) SaveMergedIndexTest(minPosting, docLens)[1]); //save the lexicon
 
         }
-        //docIdChannel.close();
-        //freqsChannel.close();
-        lexicon.setLexicon(lexiconMap);
-        Object[] results = new Object[2];
+        lexicon.setLexicon(lexiconMap); //set the lexicon
+        Object[] results = new Object[2]; //create an array for the results
         results[0] = index;
         results[1] = lexicon;
         return results;
     }
 
+    //a method to find the minimum term
     public static String findMinTermTest(HashMap<BufferedReader, PostingList> map) {
         String minTerm = null;
-
-        for (PostingList postingList : map.values()) {
-            String term = postingList.getTerm();
-            if (minTerm == null || term.compareTo(minTerm) < 0) {
-                minTerm = term;
+        //iterate over the hashmap
+        for (PostingList postingList : map.values()) { //for each posting list
+            String term = postingList.getTerm(); //get the term
+            if (minTerm == null || term.compareTo(minTerm) < 0) { //if the term is less than the minimum term or the minimum term is null
+                minTerm = term; //set the minimum term to the term
             }
         }
 
         return minTerm;
     }
 
+    //a method to save the merged index
     public static Object[] SaveMergedIndexTest(PostingList finalPostingList, int[] docLens) throws IOException{
-        ArrayList<int[]> resultsIndex = new ArrayList<>();
-        DocumentIndex docIndex = DocumentIndex.getInstance();
-        docIndex.setDocs(docLens);
-        LexiconEntry lexEntry = new LexiconEntry(finalPostingList.getTerm());
-        lexEntry.setDf(finalPostingList.getPostings().size());
-        lexEntry.setIdf(lexEntry.getDf());
-        int freqTerm = lexEntry.getTermCollFreq();
-        int maxTf = lexEntry.getMaxTf();
-        int[] docIds = new int[finalPostingList.getPostings().size()];
-        int[] freqs = new int[finalPostingList.getPostings().size()];
-        int postingPosition = 0;
-        for (Posting posting : finalPostingList.getPostings()) {
-            docIds[postingPosition] = posting.getDocId();
-            freqs[postingPosition] = posting.getFrequency();
-            postingPosition++;
-            freqTerm += posting.getFrequency();
-            lexEntry.setTermCollFreq(freqTerm);
-            if (posting.getFrequency() > maxTf) {
-                maxTf = posting.getFrequency();
-                lexEntry.setMaxTf(maxTf);
-                lexEntry.setMaxTfidf(maxTf);
+        ArrayList<int[]> resultsIndex = new ArrayList<>(); //arraylist for the final index
+        DocumentIndex docIndex = DocumentIndex.getInstance(); //get the document index
+        docIndex.setDocs(docLens); //set the documents lengths
+        LexiconEntry lexEntry = new LexiconEntry(finalPostingList.getTerm()); //create a new lexicon entry with the term of the input posting list
+        lexEntry.setDf(finalPostingList.getPostings().size()); //set the document frequency
+        lexEntry.setIdf(lexEntry.getDf()); //set the inverse document frequency
+        int freqTerm = lexEntry.getTermCollFreq(); //get the term collection frequency from the lexicon entry
+        int maxTf = lexEntry.getMaxTf(); //get the maximum term frequency from the lexicon entry
+        int[] docIds = new int[finalPostingList.getPostings().size()]; //array for the document IDs
+        int[] freqs = new int[finalPostingList.getPostings().size()]; //array for the frequencies
+        int postingPosition = 0; // initialize the position for the posting
+        for (Posting posting : finalPostingList.getPostings()) { //for each posting in the input posting list
+            docIds[postingPosition] = posting.getDocId(); //save the document ID
+            freqs[postingPosition] = posting.getFrequency(); //save the frequency
+            postingPosition++; //update the posting position
+            freqTerm += posting.getFrequency(); //update the term collection frequency
+            lexEntry.setTermCollFreq(freqTerm); //set the term collection frequency
+            if (posting.getFrequency() > maxTf) { //if the posting frequency is greater than the maximum term frequency
+                maxTf = posting.getFrequency(); //update the maximum term frequency
+                lexEntry.setMaxTf(maxTf); //set the maximum term frequency in the lexicon entry
+                lexEntry.setMaxTfidf(maxTf); //set the maximum tfidf in the lexicon entry
             }
         }
-        lexEntry.computeMaxBM25(finalPostingList);
-        /*int block_size;
-        int num_blocks;
-        if(finalPostingList.getPostings().size() <= 256){
-            block_size= finalPostingList.getPostings().size();
-            num_blocks = 1;
-        }
-        else{
-            block_size = (int) Math.ceil(Math.sqrt(finalPostingList.getPostings().size()));
-            num_blocks = (int) Math.ceil((double)finalPostingList.getPostings().size()/block_size);
-        }
-
-        int docIdSize=0;
-        int freqSize=0;
-
-        lexEntry.setNumBlocks(num_blocks);
-
-        ArrayList<Integer> docIdsBlock;
-        ArrayList<Integer> freqBlock;
-        for(int currentBlock=0; currentBlock<num_blocks; currentBlock++) {
-
-            ArrayList<ArrayList<Integer>> current = new ArrayList<>();
-            docIdsBlock=new ArrayList<>();
-            freqBlock=new ArrayList<>();
-
-
-            for (int j = 0; j < block_size; j++) {
-                if (currentBlock * block_size + j < finalPostingList.getPostings().size()) {
-                    docIdsBlock.add(docIds[currentBlock * block_size + j]);
-                    freqBlock.add(freqs[currentBlock * block_size + j]);
-                }
-            }
-
-            /*docIdChannel.write(ByteBuffer.wrap(compressedDocId));
-            freqsChannel.write(ByteBuffer.wrap(compressedFreq));
-
-            current.add(docIdsBlock);
-            current.add(freqBlock);
-            //System.out.println("current "+currentBlock+": "+current);
-            results.add(current);
-        }*/
+        lexEntry.computeMaxBM25(finalPostingList); //compute the maximum BM25 in the lexicon entry
+        //add docIds and freqs to the results index
         resultsIndex.add(docIds);
         resultsIndex.add(freqs);
-        Object[] results = new Object[2];
+        Object[] results = new Object[2]; //create an array for the final results
         results[0] = resultsIndex;
         results[1] = lexEntry;
         return results;
     }
-
 }

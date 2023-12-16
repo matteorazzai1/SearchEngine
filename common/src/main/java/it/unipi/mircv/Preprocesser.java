@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import ca.rmen.porterstemmer.PorterStemmer;
 public class Preprocesser {
 
+    //a list of stopwords that will be removed from the text
     private static List<String> stopwords = Arrays.asList(
             "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are",
             "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both",
@@ -34,23 +35,28 @@ public class Preprocesser {
             "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've",
             "your", "yours", "yourself", "yourselves");
 
+    // list of punctuation
     private static List<String> punctuation = Arrays.asList(
             "!", "?", "(", ")", "[", "]", "{", "}", ",", ";", ".", ":", "'", "“", "”", "’",
             "+", "-", "*", "/", "|", "\"", "\\", "_", "#", "<", ">", "%", "=", "^", "$", "&");
 
+    // a method to process and parse the text
     public static List<String> parse(String text) {
-        text = text.replaceAll("<.*?>", " ");
-        text = text.replaceAll("(http).*?", "");
+        text = text.replaceAll("<.*?>", " "); //remove html tags
+        text = text.replaceAll("https?://\\S+\\s?", ""); //remove urls
+        //remove punctuation
         for (String element : punctuation) {
             text = text.replace(element, " ");
         }
+        //remove initial space
         while(text.startsWith(" ")){
             text = text.substring(1);
         }
-        String[] termArray = text.split("\\s+");
+        String[] termArray = text.split("\\s+"); //split the text into terms
         List<String> termList = new ArrayList<>();
-        for (String term : termArray) {
-            term = term.toLowerCase();
+        for (String term : termArray) { //for each term
+            term = term.toLowerCase(); //convert the term to lowercase
+            //add only the terms that are not stopwords and do not contain special characters
             if(!stopwords.contains(term) && !term.matches("(?s).*[^a-zA-Z0-9](?s).*")) {
                 termList.add(term);
             }
@@ -59,31 +65,35 @@ public class Preprocesser {
         return termList;
     }
 
+    //a method to stem the terms using the Porter Stemmer
     public static List<String> stem(List<String> terms) {
-        List<String> newTerms = new ArrayList<>();
-        PorterStemmer stemmer = new PorterStemmer();
+        List<String> newTerms = new ArrayList<>(); //list for the stemmed terms
+        PorterStemmer stemmer = new PorterStemmer(); //create a new stemmer
         for (String term : terms) {
-            newTerms.add(stemmer.stemWord(term));
+            newTerms.add(stemmer.stemWord(term)); //stem the term and add it to the list
         }
         return newTerms;
     }
 
+    //a method to process the CLIquery (which has not the docID)
     public static String processCLIQuery(String row) {
-        List<String>terms = parse(row);
-        terms=stem(terms);
-        String termsString = "";
+        List<String>terms = parse(row); //parse the query
+        terms=stem(terms); //stem the query
+        String termsString = ""; //string for the query
         for(String term : terms){
-            termsString += term + " ";    }
+            termsString += term + " "; //add the terms to the string
+        }
         return termsString;
     }
 
+    //a method to process the row of the collection (which has the docID)
     public static String process(String row) {
-        List<String>terms = parse(row);
-        terms=stem(terms);
-        String termsString = terms.get(0) + "\t";
-        terms.remove(0);
-        for(String term : terms){
-            termsString += term + " ";
+        List<String>terms = parse(row); //parse the row
+        terms=stem(terms); //stem the row
+        String termsString = terms.get(0) + "\t"; //string for the row
+        terms.remove(0); //remove the docID
+        for(String term : terms){ //for each term
+            termsString += term + " "; //add the terms to the string
         }
         return termsString;
     }
