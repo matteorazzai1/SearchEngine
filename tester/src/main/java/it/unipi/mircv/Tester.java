@@ -60,7 +60,6 @@ public class Tester {
             //if the user wants to evaluate the search engine, we create the file to store the results and read the queries
             if (isEvaluation) {
                 evalChannel = setupEvaluation();
-                numResults = 100;
                 try {
                     br = createBuffer((PATH_TO_QUERIES), false);
                     query = br.readLine();
@@ -70,9 +69,10 @@ public class Tester {
             } else {
                 System.out.println("Insert a query: ");
                 query = scanner.nextLine().trim();
-                System.out.println("Select how many results you want to retrieve: ");
-                numResults = Integer.parseInt(scanner.nextLine().trim());
             }
+
+            System.out.println("Select how many results you want to retrieve: ");
+            numResults = Integer.parseInt(scanner.nextLine().trim());
 
             System.out.println("Select query type:\n1. Conjunctive query\n2. Disjunctive query");
             queryType = scanner.nextLine().trim();
@@ -148,7 +148,7 @@ public class Tester {
                 queryTimes.add(queryEnd - queryStart);
                 query = br.readLine();
             } else {
-                System.out.println("\n" + results);
+                System.out.println("\n" + formatResults(results));
                 System.out.println("Time to execute the query: " + (queryEnd - queryStart) + " milliseconds\n");
                 System.out.println("Insert a new query or press enter to go back to the starting menu");
                 query = scanner.nextLine();
@@ -168,6 +168,14 @@ public class Tester {
         }
 
 
+    }
+
+    private static String formatResults(List<Map.Entry<Integer, Double>> results) {
+        StringBuilder s = new StringBuilder();
+        for (Map.Entry<Integer, Double> entry : results) {
+            s.append(entry.getKey()).append(" | ").append(entry.getValue()).append("\n");
+        }
+        return s.toString();
     }
 
     /**
