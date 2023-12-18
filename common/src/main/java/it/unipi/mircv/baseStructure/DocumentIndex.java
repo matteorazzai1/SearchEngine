@@ -79,12 +79,12 @@ public class DocumentIndex {
 
         instance.docsLen = new int[instance.getCollectionSize()];
 
-        FileChannel docIndexChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCINDEX + ".txt"),
+        FileChannel docIndexChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCINDEX),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
         try {
-            MappedByteBuffer buffer=docIndexChannel.map(FileChannel.MapMode.READ_WRITE,0, FileUtils.retrieveFileSize(PATH_TO_FINAL_DOCINDEX+ ".txt"));
+            MappedByteBuffer buffer=docIndexChannel.map(FileChannel.MapMode.READ_WRITE,0, FileUtils.retrieveFileSize(PATH_TO_FINAL_DOCINDEX));
 
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
@@ -126,13 +126,13 @@ public class DocumentIndex {
 
         instance.docsNo = new int[instance.getCollectionSize()];
 
-        FileChannel docNoChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCNO + ".txt"),
+        FileChannel docNoChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCNO),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
         try {
             //opens the channel to the file
-            MappedByteBuffer buffer=docNoChannel.map(FileChannel.MapMode.READ_WRITE,0, FileUtils.retrieveFileSize(PATH_TO_FINAL_DOCNO+ ".txt"));
+            MappedByteBuffer buffer=docNoChannel.map(FileChannel.MapMode.READ_WRITE,0, FileUtils.retrieveFileSize(PATH_TO_FINAL_DOCNO));
 
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
