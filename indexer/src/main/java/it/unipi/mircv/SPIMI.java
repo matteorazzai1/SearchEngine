@@ -38,15 +38,15 @@ public class SPIMI {
             FileUtils.clearFolder(PATH_TO_INTERMEDIATE_INDEX_FOLDER);
         }
 
-        FileUtils.clearFile(PATH_TO_FINAL_DOCINDEX+".txt"); //clear the file of the final docIndex or create it if it does not exist
-        FileUtils.clearFile(PATH_TO_FINAL_DOCNO+".txt"); //clear the file of the final docNo or create it if it does not exist
+        FileUtils.clearFile(PATH_TO_FINAL_DOCINDEX); //clear the file of the final docIndex or create it if it does not exist
+        FileUtils.clearFile(PATH_TO_FINAL_DOCNO); //clear the file of the final docNo or create it if it does not exist
 
-        FileChannel docIndexChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCINDEX + ".txt"),
+        FileChannel docIndexChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCINDEX),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
 
-        FileChannel docNoChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCNO + ".txt"),
+        FileChannel docNoChannel=(FileChannel) Files.newByteChannel(Paths.get(PATH_TO_FINAL_DOCNO),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE);
