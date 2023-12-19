@@ -201,13 +201,15 @@ public class Merger
 
             int block_size;
             int num_blocks;
+
+            //we split a posting list only if it has more than 512 elements, otherwise we put it in a single block
             if(finalPostingList.getPostings().size() <= 512){
                 block_size= finalPostingList.getPostings().size();
                 num_blocks = 1;
             }
             else{
-                block_size = (int) Math.ceil(Math.sqrt(finalPostingList.getPostings().size()));
-                num_blocks = (int) Math.ceil((double)finalPostingList.getPostings().size()/block_size);
+                block_size = (int) Math.ceil(Math.sqrt(finalPostingList.getPostings().size())); //we split the posting list in blocks of sqrt(number_of_postings) postings
+                num_blocks = (int) Math.ceil((double)finalPostingList.getPostings().size()/block_size); //we compute the number of blocks
             }
 
             int docIdSize=0;
@@ -222,10 +224,10 @@ public class Merger
             for(int currentBlock=0; currentBlock<num_blocks; currentBlock++) {
 
 
-                docIdsBlock=new ArrayList<>();
-                freqBlock=new ArrayList<>();
+                docIdsBlock=new ArrayList<>(); //array of docIds of the current block
+                freqBlock=new ArrayList<>();  //array of freqs of the current block
 
-
+                //construct the array of docId and freqs of the current block
                 for (int j = 0; j < block_size; j++) {
                     if (currentBlock * block_size + j < finalPostingList.getPostings().size()) {
                         docIdsBlock.add(docIds[currentBlock * block_size + j]);
@@ -233,15 +235,15 @@ public class Merger
                     }
                 }
 
-
+                //compress the arrays of docId and freqs
                 byte[] compressedDocId = VariableByteCompressor.compressArrayInt(docIdsBlock.stream()
                         .mapToInt(Integer::intValue)
                         .toArray());
                 byte[] compressedFreq = UnaryCompressor.compressArrayInt(freqBlock.stream()
                         .mapToInt(Integer::intValue)
                         .toArray());
-                docIdChannel.write(ByteBuffer.wrap(compressedDocId));
-                freqsChannel.write(ByteBuffer.wrap(compressedFreq));
+                docIdChannel.write(ByteBuffer.wrap(compressedDocId));  //write the compressed docIds on the docId file
+                freqsChannel.write(ByteBuffer.wrap(compressedFreq));   //write the compressed freqs on the freqs file
 
 
 
@@ -260,7 +262,7 @@ public class Merger
 
             }
 
-                //set offset inside lexiconEntry
+            //set offset and size inside lexiconEntry
 
             if (lexEntry != null) {
                 lexEntry.setOffsetIndexDocId(offsetDocId-docIdSize);

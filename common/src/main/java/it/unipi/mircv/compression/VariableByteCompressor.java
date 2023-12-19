@@ -19,13 +19,12 @@ public class VariableByteCompressor {
             ArrayList<Byte> byteList = new ArrayList<>();
 
             while (true) {
-                byteList.add((byte) ((number % 128)));
-                if (number < 128) {
+                byteList.add((byte) ((number % 128))); //add the remainder of the division by 128, we divide by 128 because we want to use only 7 bits for each byte
+                if (number < 128) { //if the number is less than 128, the compression is finished
                     break;
                 }
-                number /= 128;
+                number /= 128; //divide the number by 128 to make possible the next division
             }
-            //byteList.set(byteList.size()-1, (byte) (byteList.get(0) - 128));
 
             // Reverse the list
             byte[] reversedList = new byte[byteList.size()];
@@ -70,19 +69,19 @@ public class VariableByteCompressor {
 
         ArrayList<Integer> decompressedArray = new ArrayList<>();
 
-        int i = 0;
-        int number = 0;
+        int i = 0; //index of the current byte
+        int number = 0; //number to decompress
 
         while (i<compressedData.length) {
             if (compressedData[i] >= 0) {
-                if(i>0){
-                    decompressedArray.add(number);
-                    number = 0;
+                if(i>0){ //if the current byte is positive, and it is not the first byte, we have to add the number to the array, because it is the first byte of the next number
+                    decompressedArray.add(number); //add the number to the array
+                    number = 0; //reset the number
                 }
-                number = 128 * number + compressedData[i];
+                number = 128 * number + compressedData[i]; //multiply the number by 128 and add the current byte
 
             } else {
-                number = 128 * number + (compressedData[i] + 128);
+                number = 128 * number + (compressedData[i] + 128); //multiply the number by 128 and add the current byte, adding 128 because the current byte is negative
             }
             i++;
         }
