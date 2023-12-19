@@ -13,8 +13,8 @@ import static it.unipi.mircv.Constants.*;
 import static it.unipi.mircv.FileUtils.createBuffer;
 import static it.unipi.mircv.MaxScore.maxScoreQuery;
 import static it.unipi.mircv.Preprocesser.*;
-import static it.unipi.mircv.Ranking.DAATDisjunctive;
-import static it.unipi.mircv.Ranking.DAATConjunctive;
+import static it.unipi.mircv.DAAT.DAATDisjunctive;
+import static it.unipi.mircv.DAAT.DAATConjunctive;
 
 public class Tester {
 

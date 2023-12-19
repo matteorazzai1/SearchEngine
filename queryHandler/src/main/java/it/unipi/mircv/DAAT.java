@@ -1,6 +1,5 @@
 package it.unipi.mircv;
 
-import ca.rmen.porterstemmer.PorterStemmer;
 import it.unipi.mircv.baseStructure.*;
 
 import java.io.IOException;
@@ -13,9 +12,8 @@ import java.util.stream.Collectors;
 
 import static it.unipi.mircv.Constants.*;
 import static it.unipi.mircv.Utils.*;
-import static it.unipi.mircv.baseStructure.SkippingBlock.readSkippingBlocks;
 
-public class Ranking {
+public class DAAT {
 
     /**
      * Function to perform a disjunctive query using the DAAT algorithm
@@ -255,59 +253,4 @@ public class Ranking {
         blocks.close();
         return output;
     }
-
-
-    /**
-     * Function to perform the nextGEQ operation on a posting list, in order to move the pointer to
-     * the next docID greater or equal than the one passed as parameter
-     * @param p the posting list to move
-     * @param nextDocId the docID to move to
-     * @param position the current position of the posting list
-     * @param block the current block of the posting list
-     * @param descriptorOffset the offset of the first descriptor block for the posting list
-     * @param numBlocks the number of blocks in which the entire posting list is split
-     * @param blockChannel the channel to the block file
-     * @return the new position and block of the posting list
-     * @throws IOException if there is an error in reading the block file
-     */
-    public static AbstractMap.SimpleEntry<Integer, Integer> nextGEQ(PostingList p, int nextDocId, int position,
-                                                                    int block, long descriptorOffset, int numBlocks,
-                                                                    FileChannel blockChannel) throws IOException {
-        //variable initialization
-        int currentId;
-        int nextBlockVal = p.getPostings().get(p.getPostingsLength()-1).getDocId();
-        SkippingBlock skippingBlock = new SkippingBlock();
-
-        //check if the entire posting list has been processed, return null in case
-        if (block == numBlocks) {
-            return null;
-        }
-
-        //iterate over all the blocks until we find the one where the nextDocId could be
-        for (int i = block; i < numBlocks; i++) {
-            //if the nextDocId couldn't be in the current block, we move to the next one
-            if (nextBlockVal < nextDocId) {
-                skippingBlock = readSkippingBlocks(descriptorOffset + ((long) (i+1) * SkippingBlock.getEntrySize()), blockChannel);
-                nextBlockVal = skippingBlock.getMaxDocId();
-            } else {
-                //if the nextDocId could be in the current block, we iterate over the postings until we find
-                // it, or we find a docID greater than the nextDocId
-                if (i != block) {
-                    //if we changed block, we overwrite the posting list with the one we just read
-                    p.rewritePostings(skippingBlock.retrieveBlock());
-                }
-                int startPos = (i == block) ? position : 0;
-                //we return the position of the first docID greater or equal than the nextDocId
-                for (int j = startPos; j < p.getPostingsLength(); j++) {
-                    currentId = p.getPostings().get(j).getDocId();
-                    if (currentId >= nextDocId) {
-                        return new AbstractMap.SimpleEntry<>(j, i);
-                    }
-                }
-            }
-        }
-        //nextDocID cannot be inside the posting list, so we can stop processing it
-        return null;
-    }
-
 }

@@ -21,12 +21,12 @@ public class EqualityTest {
         for(int i=0; i< queries.length; i++){ //for each query
             String query = Preprocesser.processCLIQuery(queries[i]); //process the query
             //perform the two ranking algorithms for TFIDF
-            LinkedList<Map.Entry<Integer, Double>> resultsDAATTFIDF = Ranking.DAATDisjunctive(query, 5, false);
+            LinkedList<Map.Entry<Integer, Double>> resultsDAATTFIDF = DAAT.DAATDisjunctive(query, 5, false);
             LinkedList<Map.Entry<Integer, Double>> resultsMaxScoreTFIDF = MaxScore.maxScoreQuery(query, 5, false);
             //check if the results are equal
             assertTrue(resultsDAATTFIDF.containsAll(resultsMaxScoreTFIDF) && resultsMaxScoreTFIDF.containsAll(resultsDAATTFIDF));
             //perform the two ranking algorithms for BM25
-            LinkedList<Map.Entry<Integer, Double>> resultsDAATBM25 = Ranking.DAATDisjunctive(query, 5, true);
+            LinkedList<Map.Entry<Integer, Double>> resultsDAATBM25 = DAAT.DAATDisjunctive(query, 5, true);
             LinkedList<Map.Entry<Integer, Double>> resultsMaxScoreBM25 = MaxScore.maxScoreQuery(query, 5, true);
             //check if the results are equal
             assertTrue(resultsDAATBM25.containsAll(resultsMaxScoreBM25) && resultsMaxScoreBM25.containsAll(resultsDAATBM25));

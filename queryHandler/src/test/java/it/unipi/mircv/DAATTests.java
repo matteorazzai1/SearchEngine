@@ -8,8 +8,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 
-import static it.unipi.mircv.Ranking.DAATConjunctive;
-import static it.unipi.mircv.Ranking.DAATDisjunctive;
+import static it.unipi.mircv.DAAT.DAATConjunctive;
+import static it.unipi.mircv.DAAT.DAATDisjunctive;
 import static org.junit.Assert.assertTrue;
 
 public class DAATTests {

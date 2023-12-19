@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static it.unipi.mircv.Constants.BLOCK_PATH;
-import static it.unipi.mircv.Ranking.nextGEQ;
+import static it.unipi.mircv.Utils.nextGEQ;
 import static it.unipi.mircv.Utils.scoringFunction;
 import static it.unipi.mircv.baseStructure.SkippingBlock.readSkippingBlocks;
 
@@ -25,7 +25,7 @@ public class MaxScore {
      * @param k the number of couple [document,score] to return
      * @param isBM25 if true it uses BM25 as scoring function, otherwise it uses TfIdf
      * @return the list of k documents with the highest score
-     * @throws IOException
+     * @throws IOException if the file of the blocks is not found
      */
     public static LinkedList<Map.Entry<Integer, Double>> maxScoreQuery(String query, int k, boolean isBM25) throws IOException {
 
