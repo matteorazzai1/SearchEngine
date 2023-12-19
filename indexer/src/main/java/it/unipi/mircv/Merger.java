@@ -201,7 +201,7 @@ public class Merger
 
             int block_size;
             int num_blocks;
-            if(finalPostingList.getPostings().size() <= 256){
+            if(finalPostingList.getPostings().size() <= 512){
                 block_size= finalPostingList.getPostings().size();
                 num_blocks = 1;
             }
