@@ -39,8 +39,9 @@ public class DAAT {
             e.printStackTrace();
         }});
 
+        //for each posting list, we keep a pointer to the current position and block
         Map<String, AbstractMap.SimpleEntry<Integer, Integer>> positions = processedQuery.keySet().stream()
-                .collect(Collectors.toMap(key -> key, key -> new AbstractMap.SimpleEntry<>(0, 0))); //couple which indicates position in the block and numBlock
+                .collect(Collectors.toMap(key -> key, key -> new AbstractMap.SimpleEntry<>(0, 0))); 
 
         DocumentIndex docIndex = DocumentIndex.getInstance();
         ArrayList<PostingList> index = new ArrayList<>();
