@@ -60,7 +60,7 @@ public class UnaryCompressor {
                 numBit = 0;
                 n = 0;
             }
-            n = n << 1;
+            n = n << 1; //to add a 0 to the least significant bit
             numBit++;
         }
 
