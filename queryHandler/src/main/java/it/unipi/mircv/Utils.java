@@ -39,7 +39,10 @@ public class Utils {
      * @param positions dictionary keeping track of the current position and block for each posting list in the index
      * @return minDocID among all the postingLists
      */
-    public static int minDocID(ArrayList<PostingList> index, Map<String, AbstractMap.SimpleEntry<Integer, Integer>> positions){ //positions are indexes, not docids
+    public static int minDocID(ArrayList<PostingList> index, Map<String, AbstractMap.SimpleEntry<Integer, Integer>> positions){ 
+        //minID is initialized to the max value for integers. In this way, the first docId encountered will become current minID for sure
+        //and if all the posting lists have been traversed, then max value is returned and the query processing stops.
+        //we assume that the collections to be processed have less than 2^31 elements, which is in fact Integer.MAX_VALUE in java
         int minID = Integer.MAX_VALUE;
         for (PostingList p : index){
             //check if we're in a valid position for the posting list since we may have already processed the entire posting list
